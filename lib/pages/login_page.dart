@@ -32,13 +32,11 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     if (resultado['success']) {
-      // Salva as informações do usuário no SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('nome', resultado['user']['nome'] ?? 'Usuário');
       await prefs.setString('email', resultado['user']['email'] ?? '');
       await prefs.setString('fctoken', resultado['token'] ?? '');
 
-      // Redireciona para a Home
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
       }
@@ -53,30 +51,75 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: constraints.maxWidth > 600 ? 400 : double.infinity,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: emailController,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: senhaController,
+                        obscureText: true,
+                        decoration: const InputDecoration(labelText: 'Senha'),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              // TODO: Navegar para a tela de recuperação
+                              Navigator.pushNamed(context, '/esqueciSenha');
+                            },
+                            child: const Text('Esqueci a senha'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (mensagemErro.isNotEmpty)
+                        Text(
+                          mensagemErro,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: carregando ? null : fazerLogin,
+                        child: carregando
+                            ? const CircularProgressIndicator()
+                            : const Text('Entrar'),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('Não tem uma conta?'),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/cadastro');
+                            },
+                            child: const Text('Criar conta'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            TextField(
-              controller: senhaController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Senha'),
-            ),
-            const SizedBox(height: 20),
-            if (mensagemErro.isNotEmpty)
-              Text(mensagemErro, style: const TextStyle(color: Colors.red)),
-            ElevatedButton(
-              onPressed: carregando ? null : fazerLogin,
-              child: carregando
-                  ? const CircularProgressIndicator()
-                  : const Text('Entrar'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

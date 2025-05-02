@@ -5,12 +5,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthService {
   static const String apiUrl = 'https://soistec-api.onrender.com';
 
-// Função para cadastrar o usuário
-  static Future<Map<String, dynamic>> cadastrarUsuario(String nome, String email, String senha) async {
+  // Função para cadastrar o usuário
+  static Future<Map<String, dynamic>> cadastrarUsuario(
+      String nome, String email, String senha) async {
     try {
       final response = await http.post(
         Uri.parse('$apiUrl/api/usuarios'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: json.encode({'nome': nome, 'email': email, 'senha': senha}),
       );
 
@@ -26,23 +30,41 @@ class AuthService {
     }
   }
 
-// Função para logar o usuário
+  // Função para logar o usuário
   static Future<Map<String, dynamic>> login(String email, String senha) async {
     try {
-      final url = Uri.parse('$apiUrl/api/auth/login');
+      final url = Uri.parse('$apiUrl/auth/login');
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode({'email': email, 'senha': senha}),
       );
 
-      final body = jsonDecode(response.body);
+      print('STATUS CODE: ${response.statusCode}');
+      print('RESPONSE BODY: ${response.body}');
+
+      Map<String, dynamic> body;
+
+      try {
+        body = jsonDecode(response.body);
+      } catch (e) {
+        return {
+          'success': false,
+          'message':
+              'Erro ao interpretar resposta do servidor. Resposta inesperada:\n${response.body}',
+        };
+      }
 
       if (response.statusCode == 200 && body['success'] == true) {
-        final usuario = body['user'];
-        final token = body['token'];
+        final usuario = {
+          'nome': body['nome'],
+          'email': body['email'],
+        };
+        final token = body['fctoken'];
 
-        // Armazenar localmente
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('nome', usuario['nome'] ?? '');
         await prefs.setString('email', usuario['email'] ?? '');
@@ -51,7 +73,7 @@ class AuthService {
         return {
           'success': true,
           'message': body['message'] ?? 'Login realizado com sucesso',
-          'usuario': usuario,
+          'user': usuario,
           'token': token,
         };
       } else {
@@ -65,13 +87,11 @@ class AuthService {
     }
   }
 
-// Função para logout
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
 
-// Função para recuperar dados do usuário
   static Future<Map<String, String?>> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     return {
