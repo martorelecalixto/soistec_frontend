@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-//import 'pages/home_page.dart';
-import 'package:sistrade/pages/filial/filial_page.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class BaseLayout extends StatefulWidget {
+  final String titulo;
+  final Widget conteudo;
+
+  const BaseLayout({Key? key, required this.titulo, required this.conteudo})
+      : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<BaseLayout> createState() => _BaseLayoutState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _BaseLayoutState extends State<BaseLayout> {
   String nome = 'Usuário';
   String email = '';
-  String token = '';
   bool isSidebarExpanded = true;
   bool isMobile = false;
-  String selectedPage = 'Home';
+  String selectedPage = '';
 
   final Map<String, IconData> menuItems = {
     'Home': Icons.home,
@@ -44,7 +45,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       nome = prefs.getString('nome') ?? 'Usuário';
       email = prefs.getString('email') ?? '';
-      token = prefs.getString('fctoken') ?? '';
     });
   }
 
@@ -56,13 +56,32 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _navegarPara(String label) {
+    if (label == 'Sair') {
+      _logout();
+    } else {
+      Navigator.pushReplacementNamed(context, '/${label.toLowerCase().replaceAll(' ', '_')}');
+    }
+  }
+
+  Widget _buildDrawerItem(String label, IconData icon) {
+    final bool selected = widget.titulo == label;
+    return ListTile(
+      leading: Icon(icon, color: selected ? Colors.blue : null),
+      title: isSidebarExpanded ? Text(label) : null,
+      tileColor: selected ? Colors.blue.shade100 : null,
+      onTap: () => _navegarPara(label),
+      hoverColor: Colors.blue.shade50,
+    );
+  }
+
   Widget _buildDrawer() {
     return Drawer(
       width: isSidebarExpanded ? 220 : 70,
       child: Container(
         color: Colors.blueGrey.shade50,
         child: ListView(
-          padding: const EdgeInsets.only(top: 0),
+          padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
               child: isSidebarExpanded
@@ -77,64 +96,20 @@ class _HomePageState extends State<HomePage> {
                     )
                   : const Center(child: FlutterLogo(size: 40)),
             ),
-            ...menuItems.entries.map((item) {
-              return _buildDrawerItem(item.key, item.value);
-            }).toList(),
-            if (isSidebarExpanded)
-              ListTile(
-                leading: const Icon(Icons.arrow_back),
-                title: const Text('Reduzir menu'),
-                onTap: () {
-                  setState(() => isSidebarExpanded = false);
-                },
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.arrow_forward),
-                tooltip: 'Expandir menu',
-                onPressed: () {
-                  setState(() => isSidebarExpanded = true);
-                },
-              ),
+            ...menuItems.entries.map((item) => _buildDrawerItem(item.key, item.value)).toList(),
+            isSidebarExpanded
+                ? ListTile(
+                    leading: const Icon(Icons.arrow_back),
+                    title: const Text('Reduzir menu'),
+                    onTap: () => setState(() => isSidebarExpanded = false),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.arrow_forward),
+                    tooltip: 'Expandir menu',
+                    onPressed: () => setState(() => isSidebarExpanded = true),
+                  ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(String label, IconData icon) {
-    final bool selected = selectedPage == label;
-    return ListTile(
-      leading: Icon(icon, color: selected ? Colors.blue : null),
-      title: isSidebarExpanded ? Text(label) : null,
-      tileColor: selected ? Colors.blue.shade100 : null,
-      onTap: () {
-        if (label == 'Sair') {
-          _logout();
-        } else if (label == 'Home') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      } else if (label == 'Filial') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const FilialPage()),
-        );
-      } 
-      else {
-          setState(() => selectedPage = label);
-        }
-      },
-      hoverColor: Colors.blue.shade50,
-    );
-  }
-
-  Widget _buildContent() {
-    return Center(
-      child: Text(
-        'Página atual: $selectedPage',
-        style: const TextStyle(fontSize: 24),
       ),
     );
   }
@@ -145,16 +120,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        //Martorele title: Row(
-        //Martorele   children: [
-        //Martorele     if (isMobile)
-        //Martorele       IconButton(
-        //Martorele         icon: const Icon(Icons.menu),
-        //Martorele         onPressed: () => Scaffold.of(context).openDrawer(),
-        //Martorele       ),
-           //Martorele const Text('Sistrade'),
-       //Martorele    ],
-       //Martorele  ),
+        title: Text(widget.titulo),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -174,7 +140,7 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: Column(
               children: [
-                Expanded(child: _buildContent()),
+                Expanded(child: widget.conteudo),
                 Container(
                   color: Colors.grey.shade200,
                   padding: const EdgeInsets.all(8),
