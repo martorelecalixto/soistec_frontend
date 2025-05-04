@@ -62,22 +62,23 @@ class AuthService {
         final usuario = {
           'nome': body['nome'],
           'email': body['email'],
+          'empresa': body['empresa'],
         };
         final token = body['fctoken'];
-        final empresa = body['empresa'];
+        //final empresa = body['empresa'];
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('nome', usuario['nome'] ?? '');
         await prefs.setString('email', usuario['email'] ?? '');
         await prefs.setString('fctoken', token ?? '');
-        await prefs.setString('empresa', 'VdRzmWah2QCY42+CYlrBbYmcXxLWyhS/JdQSiU5hxB0=' ?? '');
+        await prefs.setString('empresa', usuario['empresa'] ?? '');
 
         return {
           'success': true,
           'message': body['message'] ?? 'Login realizado com sucesso',
           'user': usuario,
           'token': token,
-          'empresa': empresa,
+          //'empresa': empresa,
         };
       } else {
         return {
@@ -101,6 +102,7 @@ class AuthService {
       'nome': prefs.getString('nome'),
       'email': prefs.getString('email'),
       'fctoken': prefs.getString('fctoken'),
+      'empresa': prefs.getString('empresa'),
     };
   }
 }

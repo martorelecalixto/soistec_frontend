@@ -1,22 +1,22 @@
 class Filial {
   final int? idfilial;
-  final String nome;
-  final String razaosocial;
-  final String cnpjcpf;
-  final String celular1;
-  final String celular2;
-  final String telefone1;
-  final String telefone2;
-  final String redessociais;
-  final String home;
-  final String email;
-  final String cep;
-  final String logradouro;
-  final String numero;
-  final String complemento;
-  final String bairro;
-  final String cidade;
-  final String estado;
+  final String? nome;
+  final String? razaosocial;
+  final String? cnpjcpf;
+  final String? celular1;
+  final String? celular2;
+  final String? telefone1;
+  final String? telefone2;
+  final String? redessociais;
+  final String? home;
+  final String? email;
+  final String? cep;
+  final String? logradouro;
+  final String? numero;
+  final String? complemento;
+  final String? bairro;
+  final String? cidade;
+  final String? estado;
 
   Filial({
     this.idfilial,
@@ -41,24 +41,24 @@ class Filial {
 
   factory Filial.fromJson(Map<String, dynamic> json) {
     return Filial(
-      idfilial: json['idfilial'],
-      nome: json['nome'],
-      razaosocial: json['razaosocial'],
-      cnpjcpf: json['cnpjcpf'],
-      celular1: json['celular1'],
-      celular2: json['celular2'],
-      telefone1: json['telefone1'],
-      telefone2: json['telefone2'],
-      redessociais: json['redessociais'],
-      home: json['home'],
-      email: json['email'],
-      cep: json['cep'],
-      logradouro: json['logradouro'],
-      numero: json['numero'],
-      complemento: json['complemento'],
-      bairro: json['bairro'],
-      cidade: json['cidade'],
-      estado: json['estado'],
+      idfilial: json['idfilial'] as int?,
+      nome: json['nome'] as String?,
+      razaosocial: json['razaosocial'] as String?,
+      cnpjcpf: json['cnpjcpf'] as String?,
+      celular1: json['celular1'] as String?,
+      celular2: json['celular2'] as String?,
+      telefone1: json['telefone1'] as String?,
+      telefone2: json['telefone2'] as String?,
+      redessociais: json['redessociais'] as String?,
+      home: json['home'] as String?,
+      email: json['email'] as String?,
+      cep: json['cep'] as String?,
+      logradouro: json['logradouro'] as String?,
+      numero: json['numero'] as String?,
+      complemento: json['complemento'] as String?,
+      bairro: json['bairro'] as String?,
+      cidade: json['cidade'] as String?,
+      estado: json['estado'] as String?,
     );
   }
 

@@ -36,6 +36,7 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.setString('nome', resultado['user']['nome'] ?? 'Usuário');
       await prefs.setString('email', resultado['user']['email'] ?? '');
       await prefs.setString('fctoken', resultado['token'] ?? '');
+      await prefs.setString('empresa', resultado['user']['empresa'] ?? '');
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');

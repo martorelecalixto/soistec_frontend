@@ -46,23 +46,23 @@ class _FilialFormState extends State<FilialForm> {
     super.initState();
     if (widget.filial != null) {
       final f = widget.filial!;
-      _nomeController.text = f.nome;
-      _razaoSocialController.text = f.razaosocial;
-      _cnpjCpfController.text = f.cnpjcpf;
-      _celular1Controller.text = f.celular1;
-      _celular2Controller.text = f.celular2;
-      _telefone1Controller.text = f.telefone1;
-      _telefone2Controller.text = f.telefone2;
-      _redesSociaisController.text = f.redessociais;
-      _homeController.text = f.home;
-      _emailController.text = f.email;
-      _cepController.text = f.cep;
-      _logradouroController.text = f.logradouro;
-      _numeroController.text = f.numero;
-      _complementoController.text = f.complemento;
-      _bairroController.text = f.bairro;
-      _cidadeController.text = f.cidade;
-      _estadoController.text = f.estado;
+      _nomeController.text = f.nome!;
+      _razaoSocialController.text = f.razaosocial!;
+      _cnpjCpfController.text = f.cnpjcpf!;
+      _celular1Controller.text = f.celular1!;
+      _celular2Controller.text = f.celular2!;
+      _telefone1Controller.text = f.telefone1!;
+      _telefone2Controller.text = f.telefone2!;
+      _redesSociaisController.text = f.redessociais!;
+      _homeController.text = f.home!;
+      _emailController.text = f.email!;
+      _cepController.text = f.cep!;
+      _logradouroController.text = f.logradouro!;
+      _numeroController.text = f.numero!;
+      _complementoController.text = f.complemento!;
+      _bairroController.text = f.bairro!;
+      _cidadeController.text = f.cidade!;
+      _estadoController.text = f.estado!;
     }
   }
 

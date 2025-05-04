@@ -28,15 +28,15 @@ class _FilialPageState extends State<FilialPage> {
     final List<Filial> resultado = await FilialService.getFiliais();
 
     final listaMapeada = resultado.map((f) => {
-      'idfilial': f.idfilial,
-      'nome': f.nome,
-      'email': f.email,
-      'cnpjcpf': f.cnpjcpf,
-      'celular1': f.celular1,
-      'celular2': f.celular2,
-      'telefone1': f.telefone1,
-      'telefone2': f.telefone2,
-    }).toList();
+          'idfilial': f.idfilial,
+          'nome': f.nome,
+          'email': f.email,
+          'cnpjcpf': f.cnpjcpf,
+          'celular1': f.celular1,
+          'celular2': f.celular2,
+          'telefone1': f.telefone1,
+          'telefone2': f.telefone2,
+        }).toList();
 
     setState(() {
       filiais = listaMapeada;
@@ -76,8 +76,12 @@ class _FilialPageState extends State<FilialPage> {
         title: const Text('Confirmar Exclusão'),
         content: const Text('Deseja realmente excluir esta filial?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Excluir')),
         ],
       ),
     );
@@ -90,6 +94,7 @@ class _FilialPageState extends State<FilialPage> {
   @override
   Widget build(BuildContext context) {
     final isWeb = MediaQuery.of(context).size.width > 600;
+    final textStyle = Theme.of(context).textTheme.bodyLarge;
 
     return BaseLayout(
       titulo: 'Filial',
@@ -121,8 +126,8 @@ class _FilialPageState extends State<FilialPage> {
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : isWeb
-                      ? _buildTabelaWeb()
-                      : _buildListaMobile(),
+                      ? _buildTabelaWeb(textStyle)
+                      : _buildListaMobile(textStyle),
             ),
           ],
         ),
@@ -130,81 +135,79 @@ class _FilialPageState extends State<FilialPage> {
     );
   }
 
+  Widget _buildTabelaWeb(TextStyle? textStyle) {
+    if (filiaisFiltradas.isEmpty) {
+      return const Center(child: Text('Nenhuma filial encontrada.'));
+    }
 
-  Widget _buildTabelaWeb() {
-  if (filiaisFiltradas.isEmpty) {
-    return const Center(child: Text('Nenhuma filial encontrada.'));
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: const [
+          DataColumn(label: Text('Nome')),
+          DataColumn(label: Text('Email')),
+          DataColumn(label: Text('CNPJ')),
+          DataColumn(label: Text('Celular 1')),
+          DataColumn(label: Text('Celular 2')),
+          DataColumn(label: Text('Telefone 1')),
+          DataColumn(label: Text('Telefone 2')),
+          DataColumn(label: Text('Ações')),
+        ],
+        rows: filiaisFiltradas.map((filial) {
+          return DataRow(cells: [
+            DataCell(Text(filial['nome'] ?? '', style: textStyle)),
+            DataCell(Text(filial['email'] ?? '', style: textStyle)),
+            DataCell(Text(filial['cnpjcpf'] ?? '', style: textStyle)),
+            DataCell(Text(filial['celular1'] ?? '', style: textStyle)),
+            DataCell(Text(filial['celular2'] ?? '', style: textStyle)),
+            DataCell(Text(filial['telefone1'] ?? '', style: textStyle)),
+            DataCell(Text(filial['telefone2'] ?? '', style: textStyle)),
+            DataCell(Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _abrirFormulario(filial: filial),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => _confirmarExclusao(filial['idfilial']),
+                ),
+              ],
+            )),
+          ]);
+        }).toList(),
+      ),
+    );
   }
 
-  return SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: DataTable(
-      columns: const [
-        DataColumn(label: Text('Nome')),
-        DataColumn(label: Text('Email')),
-        DataColumn(label: Text('CNPJ')),
-        DataColumn(label: Text('Celular 1')),
-        DataColumn(label: Text('Celular 2')),
-        DataColumn(label: Text('Telefone 1')),
-        DataColumn(label: Text('Telefone 2')),
-        DataColumn(label: Text('Ações')),
-      ],
-      rows: filiaisFiltradas.map((filial) {
-        return DataRow(cells: [
-          DataCell(Text(filial['nome'] ?? '')),
-          DataCell(Text(filial['email'] ?? '')),
-          DataCell(Text(filial['cnpjcpf'] ?? '')),
-          DataCell(Text(filial['celular1'] ?? '')),
-          DataCell(Text(filial['celular2'] ?? '')),
-          DataCell(Text(filial['telefone1'] ?? '')),
-          DataCell(Text(filial['telefone2'] ?? '')),
-          DataCell(Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => _abrirFormulario(filial: filial),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => _confirmarExclusao(filial['idfilial']),
-              ),
-            ],
-          )),
-        ]);
-      }).toList(),
-    ),
-  );
-}
+  Widget _buildListaMobile(TextStyle? textStyle) {
+    if (filiaisFiltradas.isEmpty) {
+      return const Center(child: Text('Nenhuma filial encontrada.'));
+    }
 
-Widget _buildListaMobile() {
-  if (filiaisFiltradas.isEmpty) {
-    return const Center(child: Text('Nenhuma filial encontrada.'));
-  }
-
-  return ListView.builder(
-    itemCount: filiaisFiltradas.length,
-    itemBuilder: (_, index) {
-      final filial = filiaisFiltradas[index];
-      return Card(
-        child: ListTile(
-          title: Text(filial['nome'] ?? ''),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => _abrirFormulario(filial: filial),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => _confirmarExclusao(filial['idfilial']),
-              ),
-            ],
+    return ListView.builder(
+      itemCount: filiaisFiltradas.length,
+      itemBuilder: (_, index) {
+        final filial = filiaisFiltradas[index];
+        return Card(
+          child: ListTile(
+            title: Text(filial['nome'] ?? '', style: textStyle),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _abrirFormulario(filial: filial),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => _confirmarExclusao(filial['idfilial']),
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 }
