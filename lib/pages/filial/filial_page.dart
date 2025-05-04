@@ -23,8 +23,34 @@ class _FilialPageState extends State<FilialPage> {
     _carregarFiliais();
   }
 
-  Future<void> _carregarFiliais() async {
-    setState(() => isLoading = true);
+//  Future<void> _carregarFiliais() async {
+//    setState(() => isLoading = true);
+//    final List<Filial> resultado = await FilialService.getFiliais();
+
+//    final listaMapeada = resultado.map((f) => {
+//          'idfilial': f.idfilial,
+//          'nome': f.nome,
+//          'email': f.email,
+//          'cnpjcpf': f.cnpjcpf,
+//          'celular1': f.celular1,
+//          'celular2': f.celular2,
+//          'telefone1': f.telefone1,
+//          'telefone2': f.telefone2,
+//        }).toList();
+
+//        print('Dados decodificados: $listaMapeada');
+
+//    setState(() {
+//      filiais = listaMapeada;
+//      filiaisFiltradas = listaMapeada;
+//      isLoading = false;
+//    });
+//  }
+
+
+Future<void> _carregarFiliais() async {
+  setState(() => isLoading = true);
+  try {
     final List<Filial> resultado = await FilialService.getFiliais();
 
     final listaMapeada = resultado.map((f) => {
@@ -38,12 +64,19 @@ class _FilialPageState extends State<FilialPage> {
           'telefone2': f.telefone2,
         }).toList();
 
+    print('Dados decodificados: $listaMapeada');
+
     setState(() {
       filiais = listaMapeada;
       filiaisFiltradas = listaMapeada;
       isLoading = false;
     });
+  } catch (e) {
+    print('Erro ao carregar filiais: $e');
+    setState(() => isLoading = false);
   }
+}
+
 
   void _filtrarFiliais(String nome) {
     final filtradas = filiais.where((filial) {

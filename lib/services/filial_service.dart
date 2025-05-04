@@ -43,6 +43,39 @@ class FilialService {
  // }
 
 
+ // static Future<List<Filial>> getFiliais({String? nome}) async {
+ //   final prefs = await SharedPreferences.getInstance();
+ //   final empresa = prefs.getString('empresa');
+
+ //   if (empresa == null || empresa.isEmpty) {
+ //     throw Exception('Empresa não definida nas preferências.');
+ //   }
+
+ //   final queryParams = {
+ //     'empresa': empresa,
+ //     'nome': nome ?? '',
+ //     'cnpjcpf': '',
+ //     'email': '',
+ //   };
+
+ //   final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+ //   final response = await http.get(uri);
+
+ //   if (response.statusCode == 200) {
+ //     final List jsonData = json.decode(response.body);
+
+      //print('Status Code: ${response.statusCode}');
+      //print('Response Body: ${response.body}');
+ //     print('Dados decodificados: $jsonData');
+     // final filiais = jsonData.map((e) => Filial.fromJson(e)).toList();
+     // print('Filiais mapeadas: $filiais');
+
+ //     return jsonData.map((e) => Filial.fromJson(e)).toList();
+//    } else {
+//      throw Exception('Erro ao carregar filiais');
+//    }
+//  }
+
   static Future<List<Filial>> getFiliais({String? nome}) async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
@@ -64,17 +97,14 @@ class FilialService {
     if (response.statusCode == 200) {
       final List jsonData = json.decode(response.body);
 
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
       print('Dados decodificados: $jsonData');
-      final filiais = jsonData.map((e) => Filial.fromJson(e)).toList();
-      print('Filiais mapeadas: $filiais');
 
       return jsonData.map((e) => Filial.fromJson(e)).toList();
     } else {
       throw Exception('Erro ao carregar filiais');
     }
   }
+
 
   static Future<bool> createFilial(Filial filial) async {
     final response = await http.post(
