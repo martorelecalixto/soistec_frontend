@@ -62,6 +62,16 @@ Future<void> _carregarFiliais() async {
           'celular2': f.celular2,
           'telefone1': f.telefone1,
           'telefone2': f.telefone2,
+          'razaosocial': f.razaosocial,
+          'home': f.home,
+          'redessociais': f.redessociais,
+          'logradouro': f.logradouro,
+          'complemento': f.complemento,
+          'numero': f.numero,
+          'estado': f.estado,
+          'cidade': f.cidade,
+          'bairro': f.bairro,
+          'cep': f.cep,
         }).toList();
 
     print('Dados filial_page: $listaMapeada');
@@ -99,6 +109,8 @@ Future<void> _carregarFiliais() async {
         ),
       ),
     );
+   // final reg = json.encode(filial.toJson());
+   // print('abrirFormulario $filial');
     if (resultado == true) _carregarFiliais();
   }
 
