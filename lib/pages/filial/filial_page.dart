@@ -64,7 +64,7 @@ Future<void> _carregarFiliais() async {
           'telefone2': f.telefone2,
         }).toList();
 
-    print('Dados decodificados: $listaMapeada');
+    print('Dados filial_page: $listaMapeada');
 
     setState(() {
       filiais = listaMapeada;

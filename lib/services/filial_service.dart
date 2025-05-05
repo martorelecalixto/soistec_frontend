@@ -97,7 +97,7 @@ class FilialService {
     if (response.statusCode == 200) {
       final List jsonData = json.decode(response.body);
 
-      print('Dados decodificados: $jsonData');
+      print('Dados filial_service: $jsonData');
 
       return jsonData.map((e) => Filial.fromJson(e)).toList();
     } else {
@@ -107,6 +107,8 @@ class FilialService {
 
 
   static Future<bool> createFilial(Filial filial) async {
+    final resultado = json.encode(filial.toJson());
+    print('Dados decodificados: $resultado');
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {'Content-Type': 'application/json'},

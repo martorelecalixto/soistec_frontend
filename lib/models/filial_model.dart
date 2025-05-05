@@ -17,6 +17,7 @@ class Filial {
   final String? bairro;
   final String? cidade;
   final String? estado;
+  final String? empresa;
 
   Filial({
     this.idfilial,
@@ -37,6 +38,7 @@ class Filial {
     this.bairro,
     this.cidade,
     this.estado,
+    this.empresa,
   });
 
   factory Filial.fromJson(Map<String, dynamic> json) {
@@ -44,7 +46,7 @@ class Filial {
       idfilial: json['IdFilial'] as int?,
       nome: json['Nome'] as String?,
       razaosocial: json['RazaoSocial'] as String?,
-      cnpjcpf: json['CNPJCPF'] as String?,
+      cnpjcpf: json['cnpjcpf'] as String?,
       celular1: json['Celular1'] as String?,
       celular2: json['Celular2'] as String?,
       telefone1: json['Telefone1'] as String?,
@@ -59,29 +61,31 @@ class Filial {
       bairro: json['Bairro'] as String?,
       cidade: json['Cidade'] as String?,
       estado: json['Estado'] as String?,
+      empresa: json['empresa'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'IdFilial': idfilial,
-      'Nome': nome,
-      'RazaoSocial': razaosocial,
-      'CNPJCPF': cnpjcpf,
-      'Celular1': celular1,
-      'Celular2': celular2,
-      'Telefone1': telefone1,
-      'Telefone2': telefone2,
-      'RedesSociais': redessociais,
-      'Home': home,
-      'Email': email,
-      'CEP': cep,
-      'Logradouro': logradouro,
-      'Numero': numero,
-      'Complemento': complemento,
-      'Bairro': bairro,
-      'Cidade': cidade,
-      'Estado': estado,
+      'idfilial': idfilial,
+      'nome': nome,
+      'razaosocial': razaosocial,
+      'cnpjcpf': cnpjcpf,
+      'celular1': celular1,
+      'celular2': celular2,
+      'telefone1': telefone1,
+      'telefone2': telefone2,
+      'redessociais': redessociais,
+      'home': home,
+      'email': email,
+      'cep': cep,
+      'logradouro': logradouro,
+      'numero': numero,
+      'complemento': complemento,
+      'bairro': bairro,
+      'cidade': cidade,
+      'estado': estado,
+      'empresa': empresa,
     };
   }
 }

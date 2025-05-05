@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import '../models/filial_model.dart';
-import '../services/filial_service.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
+import '../models/filial_model.dart';
+import '../services/filial_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FilialForm extends StatefulWidget {
   final Filial? filial;
@@ -40,29 +42,30 @@ class _FilialFormState extends State<FilialForm> {
   // Máscaras
   final _cnpjCpfMask = MaskTextInputFormatter(mask: '##.###.###/####-##');
   final _telefoneMask = MaskTextInputFormatter(mask: '(##) #####-####');
+  final _cepMask = MaskTextInputFormatter(mask: '#####-###');
 
   @override
   void initState() {
     super.initState();
     if (widget.filial != null) {
       final f = widget.filial!;
-      _nomeController.text = f.nome!;
-      _razaoSocialController.text = f.razaosocial!;
-      _cnpjCpfController.text = f.cnpjcpf!;
-      _celular1Controller.text = f.celular1!;
-      _celular2Controller.text = f.celular2!;
-      _telefone1Controller.text = f.telefone1!;
-      _telefone2Controller.text = f.telefone2!;
-      _redesSociaisController.text = f.redessociais!;
-      _homeController.text = f.home!;
-      _emailController.text = f.email!;
-      _cepController.text = f.cep!;
-      _logradouroController.text = f.logradouro!;
-      _numeroController.text = f.numero!;
-      _complementoController.text = f.complemento!;
-      _bairroController.text = f.bairro!;
-      _cidadeController.text = f.cidade!;
-      _estadoController.text = f.estado!;
+      _nomeController.text = f.nome ?? '';
+      _razaoSocialController.text = f.razaosocial ?? '';
+      _cnpjCpfController.text = f.cnpjcpf ?? '';
+      _celular1Controller.text = f.celular1 ?? '';
+      _celular2Controller.text = f.celular2 ?? '';
+      _telefone1Controller.text = f.telefone1 ?? '';
+      _telefone2Controller.text = f.telefone2 ?? '';
+      _redesSociaisController.text = f.redessociais ?? '';
+      _homeController.text = f.home ?? '';
+      _emailController.text = f.email ?? '';
+      _cepController.text = f.cep ?? '';
+      _logradouroController.text = f.logradouro ?? '';
+      _numeroController.text = f.numero ?? '';
+      _complementoController.text = f.complemento ?? '';
+      _bairroController.text = f.bairro ?? '';
+      _cidadeController.text = f.cidade ?? '';
+      _estadoController.text = f.estado ?? '';
     }
   }
 
@@ -80,6 +83,13 @@ class _FilialFormState extends State<FilialForm> {
   }
 
   void _salvar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final empresa = prefs.getString('empresa');
+
+    if (empresa == null || empresa.isEmpty) {
+      throw Exception('Empresa não definida nas preferências.');
+    }
+
     if (_formKey.currentState!.validate()) {
       final filial = Filial(
         idfilial: widget.filial?.idfilial ?? 0,
@@ -100,12 +110,15 @@ class _FilialFormState extends State<FilialForm> {
         bairro: _bairroController.text,
         cidade: _cidadeController.text,
         estado: _estadoController.text,
+        empresa: empresa,
       );
 
       bool sucesso;
       if (widget.filial == null) {
+        //print('ENTROU INSERT');
         sucesso = await FilialService.createFilial(filial);
       } else {
+        //print('ENTROU UPDATE');
         sucesso = await FilialService.updateFilial(filial);
       }
 
@@ -117,117 +130,130 @@ class _FilialFormState extends State<FilialForm> {
     }
   }
 
+  Widget _buildResponsiveForm(double width) {
+    int columns;
+    if (width >= 1200) {
+      columns = 4;
+    } else if (width >= 900) {
+      columns = 3;
+    } else if (width >= 500) {
+      columns = 2;
+    } else {
+      columns = 1;
+    }
+
+    // Lista de campos com suas respectivas larguras em colunas
+    final fields = [
+      {'widget': _buildTextField(_nomeController, 'Nome', validator: true), 'colSpan': columns},
+      {'widget': _buildTextField(_razaoSocialController, 'Razão Social'), 'colSpan': columns},
+      {'widget': _buildTextField(_cnpjCpfController, 'CNPJ/CPF', inputFormatters: [_cnpjCpfMask]), 'colSpan': 1},
+      {'widget': _buildTextField(_celular1Controller, 'Celular 1', inputFormatters: [_telefoneMask]), 'colSpan': 1},
+      {'widget': _buildTextField(_celular2Controller, 'Celular 2', inputFormatters: [_telefoneMask]), 'colSpan': 1},
+      {'widget': _buildTextField(_telefone1Controller, 'Telefone 1', inputFormatters: [_telefoneMask]), 'colSpan': 1},
+      {'widget': _buildTextField(_telefone2Controller, 'Telefone 2', inputFormatters: [_telefoneMask]), 'colSpan': 1},
+      {'widget': _buildTextField(_redesSociaisController, 'Redes Sociais'), 'colSpan': columns},
+      {'widget': _buildTextField(_homeController, 'Home'), 'colSpan': columns},
+      {'widget': _buildTextField(_emailController, 'Email', validator: true), 'colSpan': columns},
+      {'widget': _buildTextField(_cepController, 'CEP', inputFormatters: [_cepMask], keyboardType: TextInputType.number, onFieldSubmitted: _buscarCep), 'colSpan': 1},
+      {'widget': _buildTextField(_logradouroController, 'Logradouro'), 'colSpan': columns - 1},
+      {'widget': _buildTextField(_numeroController, 'Número'), 'colSpan': 1},
+      {'widget': _buildTextField(_complementoController, 'Complemento'), 'colSpan': 1},
+      {'widget': _buildTextField(_bairroController, 'Bairro'), 'colSpan': 1},
+      {'widget': _buildTextField(_cidadeController, 'Cidade'), 'colSpan': columns - 1},
+      {'widget': _buildTextField(_estadoController, 'Estado'), 'colSpan': 1},
+    ];
+
+    List<Widget> rows = [];
+    List<Widget> currentRow = [];
+    int currentColCount = 0;
+
+    for (var field in fields) {
+      int colSpan = field['colSpan'] as int;
+      if (currentColCount + colSpan > columns) {
+        rows.add(Row(
+          children: currentRow,
+        ));
+        currentRow = [];
+        currentColCount = 0;
+      }
+      currentRow.add(
+        Expanded(
+          flex: colSpan,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: field['widget'] as Widget,
+          ),
+        ),
+      );
+      currentColCount += colSpan;
+    }
+
+    if (currentRow.isNotEmpty) {
+      rows.add(Row(
+        children: currentRow,
+      ));
+    }
+
+    return Column(
+      children: rows,
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    bool validator = false,
+    List<TextInputFormatter>? inputFormatters,
+    TextInputType? keyboardType,
+    void Function(String)? onFieldSubmitted,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      validator: validator ? (value) => value!.isEmpty ? 'Informe o $label' : null : null,
+      inputFormatters: inputFormatters,
+      keyboardType: keyboardType,
+      onFieldSubmitted: onFieldSubmitted,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isWeb = MediaQuery.of(context).size.width > 600;
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        top: 16,
-        left: 16,
-        right: 16,
-      ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Campos do formulário
-              TextFormField(
-                controller: _nomeController,
-                decoration: const InputDecoration(labelText: 'Nome'),
-                validator: (value) => value!.isEmpty ? 'Informe o nome' : null,
-              ),
-              TextFormField(
-                controller: _razaoSocialController,
-                decoration: const InputDecoration(labelText: 'Razão Social'),
-              ),
-              TextFormField(
-                controller: _cnpjCpfController,
-                decoration: const InputDecoration(labelText: 'CNPJ/CPF'),
-                inputFormatters: [_cnpjCpfMask],
-              ),
-              TextFormField(
-                controller: _celular1Controller,
-                decoration: const InputDecoration(labelText: 'Celular 1'),
-                inputFormatters: [_telefoneMask],
-              ),
-              TextFormField(
-                controller: _celular2Controller,
-                decoration: const InputDecoration(labelText: 'Celular 2'),
-                inputFormatters: [_telefoneMask],
-              ),
-              TextFormField(
-                controller: _telefone1Controller,
-                decoration: const InputDecoration(labelText: 'Telefone 1'),
-                inputFormatters: [_telefoneMask],
-              ),
-              TextFormField(
-                controller: _telefone2Controller,
-                decoration: const InputDecoration(labelText: 'Telefone 2'),
-                inputFormatters: [_telefoneMask],
-              ),
-              TextFormField(
-                controller: _redesSociaisController,
-                decoration: const InputDecoration(labelText: 'Redes Sociais'),
-              ),
-              TextFormField(
-                controller: _homeController,
-                decoration: const InputDecoration(labelText: 'Home'),
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) => value!.isEmpty ? 'Informe o email' : null,
-              ),
-              TextFormField(
-                controller: _cepController,
-                decoration: const InputDecoration(labelText: 'CEP'),
-                keyboardType: TextInputType.number,
-                onFieldSubmitted: _buscarCep,
-              ),
-              TextFormField(
-                controller: _logradouroController,
-                decoration: const InputDecoration(labelText: 'Logradouro'),
-              ),
-              TextFormField(
-                controller: _numeroController,
-                decoration: const InputDecoration(labelText: 'Número'),
-              ),
-              TextFormField(
-                controller: _complementoController,
-                decoration: const InputDecoration(labelText: 'Complemento'),
-              ),
-              TextFormField(
-                controller: _bairroController,
-                decoration: const InputDecoration(labelText: 'Bairro'),
-              ),
-              TextFormField(
-                controller: _cidadeController,
-                decoration: const InputDecoration(labelText: 'Cidade'),
-              ),
-              TextFormField(
-                controller: _estadoController,
-                decoration: const InputDecoration(labelText: 'Estado'),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            top: 16,
+            left: 16,
+            right: 16,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _salvar,
-                    child: const Text('Salvar'),
+                  _buildResponsiveForm(constraints.maxWidth),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _salvar,
+                        child: const Text('Salvar'),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
