@@ -5,7 +5,7 @@ import 'package:sistrade/services/filial_service.dart';
 import 'package:sistrade/widgets/filial_form.dart';
 
 class FilialPage extends StatefulWidget {
-  const FilialPage({Key? key}) : super(key: key);
+  const FilialPage({super.key});
 
   @override
   _FilialPageState createState() => _FilialPageState();
@@ -23,78 +23,44 @@ class _FilialPageState extends State<FilialPage> {
     _carregarFiliais();
   }
 
-//  Future<void> _carregarFiliais() async {
-//    setState(() => isLoading = true);
-//    final List<Filial> resultado = await FilialService.getFiliais();
+  Future<void> _carregarFiliais() async {
+    setState(() => isLoading = true);
+    try {
+      final List<Filial> resultado = await FilialService.getFiliais();
 
-//    final listaMapeada = resultado.map((f) => {
-//          'idfilial': f.idfilial,
-//          'nome': f.nome,
-//          'email': f.email,
-//          'cnpjcpf': f.cnpjcpf,
-//          'celular1': f.celular1,
-//          'celular2': f.celular2,
-//          'telefone1': f.telefone1,
-//          'telefone2': f.telefone2,
-//        }).toList();
+      final listaMapeada = resultado.map((f) => {
+            'idfilial': f.idfilial,
+            'nome': f.nome,
+            'email': f.email,
+            'cnpjcpf': f.cnpjcpf,
+            'celular1': f.celular1,
+            'celular2': f.celular2,
+            'telefone1': f.telefone1,
+            'telefone2': f.telefone2,
+          }).toList();
 
-//        print('Dados decodificados: $listaMapeada');
-
-//    setState(() {
-//      filiais = listaMapeada;
-//      filiaisFiltradas = listaMapeada;
-//      isLoading = false;
-//    });
-//  }
-
-
-Future<void> _carregarFiliais() async {
-  setState(() => isLoading = true);
-  try {
-    final List<Filial> resultado = await FilialService.getFiliais();
-
-    final listaMapeada = resultado.map((f) => {
-          'idfilial': f.idfilial,
-          'nome': f.nome,
-          'email': f.email,
-          'cnpjcpf': f.cnpjcpf,
-          'celular1': f.celular1,
-          'celular2': f.celular2,
-          'telefone1': f.telefone1,
-          'telefone2': f.telefone2,
-          'razaosocial': f.razaosocial,
-          'home': f.home,
-          'redessociais': f.redessociais,
-          'logradouro': f.logradouro,
-          'complemento': f.complemento,
-          'numero': f.numero,
-          'estado': f.estado,
-          'cidade': f.cidade,
-          'bairro': f.bairro,
-          'cep': f.cep,
-        }).toList();
-
-    print('Dados filial_page: $listaMapeada');
-
-    setState(() {
-      filiais = listaMapeada;
-      filiaisFiltradas = listaMapeada;
-      isLoading = false;
-    });
-  } catch (e) {
-    print('Erro ao carregar filiais: $e');
-    setState(() => isLoading = false);
+      setState(() {
+        filiais = listaMapeada;
+        filiaisFiltradas = listaMapeada;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
   }
+
+void _filtrarFiliais(String valor) {
+  final query = valor.toLowerCase();
+  final filtradas = filiais.where((filial) {
+    final nome = filial['nome']?.toLowerCase() ?? '';
+    final email = filial['email']?.toLowerCase() ?? '';
+    final cnpj = filial['cnpjcpf']?.toLowerCase() ?? '';
+    return nome.contains(query) || email.contains(query) || cnpj.contains(query);
+  }).toList();
+
+  setState(() => filiaisFiltradas = filtradas);
 }
 
-
-  void _filtrarFiliais(String nome) {
-    final filtradas = filiais.where((filial) {
-      final nomeFilial = filial['nome']?.toLowerCase() ?? '';
-      return nomeFilial.contains(nome.toLowerCase());
-    }).toList();
-    setState(() => filiaisFiltradas = filtradas);
-  }
 
   void _abrirFormulario({Map<String, dynamic>? filial}) async {
     final resultado = await showModalBottomSheet<bool>(
@@ -109,8 +75,6 @@ Future<void> _carregarFiliais() async {
         ),
       ),
     );
-   // final reg = json.encode(filial.toJson());
-   // print('abrirFormulario $filial');
     if (resultado == true) _carregarFiliais();
   }
 
@@ -138,7 +102,7 @@ Future<void> _carregarFiliais() async {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = MediaQuery.of(context).size.width > 600;
+    final double largura = MediaQuery.of(context).size.width;
     final textStyle = Theme.of(context).textTheme.bodyLarge;
 
     return BaseLayout(
@@ -153,25 +117,32 @@ Future<void> _carregarFiliais() async {
                   child: TextField(
                     controller: _searchController,
                     decoration: const InputDecoration(
-                      labelText: 'Buscar por nome',
+                      labelText: 'Buscar por nome, e-mail ou CNPJ',
                       prefixIcon: Icon(Icons.search),
                     ),
                     onChanged: _filtrarFiliais,
                   ),
                 ),
                 const SizedBox(width: 8),
-                ElevatedButton(
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue, // Cor de fundo azul
+                    foregroundColor: Colors.white, // Cor do texto e ícone
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
                   onPressed: () => _abrirFormulario(),
-                  child: const Text('Nova Filial'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nova Filial'),
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : isWeb
-                      ? _buildTabelaWeb(textStyle)
+                  : largura > 600
+                      ? _buildTabelaWeb(textStyle, largura)
                       : _buildListaMobile(textStyle),
             ),
           ],
@@ -180,79 +151,122 @@ Future<void> _carregarFiliais() async {
     );
   }
 
-  Widget _buildTabelaWeb(TextStyle? textStyle) {
-    if (filiaisFiltradas.isEmpty) {
-      return const Center(child: Text('Nenhuma filial encontrada.'));
-    }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Nome')),
-          DataColumn(label: Text('Email')),
-          DataColumn(label: Text('CNPJ')),
-          DataColumn(label: Text('Celular 1')),
-          DataColumn(label: Text('Celular 2')),
-          DataColumn(label: Text('Telefone 1')),
-          DataColumn(label: Text('Telefone 2')),
-          DataColumn(label: Text('Ações')),
-        ],
-        rows: filiaisFiltradas.map((filial) {
-          return DataRow(cells: [
-            DataCell(Text(filial['nome'] ?? '', style: textStyle)),
-            DataCell(Text(filial['email'] ?? '', style: textStyle)),
-            DataCell(Text(filial['cnpjcpf'] ?? '', style: textStyle)),
-            DataCell(Text(filial['celular1'] ?? '', style: textStyle)),
-            DataCell(Text(filial['celular2'] ?? '', style: textStyle)),
-            DataCell(Text(filial['telefone1'] ?? '', style: textStyle)),
-            DataCell(Text(filial['telefone2'] ?? '', style: textStyle)),
+Widget _buildTabelaWeb(TextStyle? textStyle, double largura) {
+  if (filiaisFiltradas.isEmpty) {
+    return const Center(child: Text('Nenhuma filial encontrada.'));
+  }
+
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: DataTable(
+      columns: [
+        DataColumn(label: const Text('Ações', style: TextStyle(fontSize: 12))),
+        DataColumn(label: const Text('Nome', style: TextStyle(fontSize: 12))),
+        if (largura > 800) DataColumn(label: const Text('Email', style: TextStyle(fontSize: 12))),
+        if (largura > 900) DataColumn(label: const Text('CNPJ', style: TextStyle(fontSize: 12))),
+        if (largura > 1000) DataColumn(label: const Text('Celular 1', style: TextStyle(fontSize: 12))),
+        if (largura > 1100) DataColumn(label: const Text('Celular 2', style: TextStyle(fontSize: 12))),
+        if (largura > 1200) DataColumn(label: const Text('Telefone 1', style: TextStyle(fontSize: 12))),
+        if (largura > 1300) DataColumn(label: const Text('Telefone 2', style: TextStyle(fontSize: 12))),
+      ],
+      rows: filiaisFiltradas.asMap().entries.map((entry) {
+        final index = entry.key;
+        final filial = entry.value;
+        final isEven = index % 2 == 0;
+
+        return DataRow(
+          color: MaterialStateProperty.resolveWith<Color?>(
+            (Set<MaterialState> states) {
+              return isEven ? Colors.blueGrey[100] : Colors.white;
+            },
+          ),
+          cells: [
             DataCell(Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.edit),
+                  icon: const Icon(Icons.edit, color: Colors.orange),
                   onPressed: () => _abrirFormulario(filial: filial),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete),
+                  icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () => _confirmarExclusao(filial['idfilial']),
                 ),
               ],
             )),
-          ]);
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildListaMobile(TextStyle? textStyle) {
-    if (filiaisFiltradas.isEmpty) {
-      return const Center(child: Text('Nenhuma filial encontrada.'));
-    }
-
-    return ListView.builder(
-      itemCount: filiaisFiltradas.length,
-      itemBuilder: (_, index) {
-        final filial = filiaisFiltradas[index];
-        return Card(
-          child: ListTile(
-            title: Text(filial['nome'] ?? '', style: textStyle),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _abrirFormulario(filial: filial),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _confirmarExclusao(filial['idfilial']),
-                ),
-              ],
-            ),
-          ),
+            DataCell(Text(filial['nome'] ?? '', style: const TextStyle(fontSize: 12))),
+            if (largura > 800) DataCell(Text(filial['email'] ?? '', style: const TextStyle(fontSize: 12))),
+            if (largura > 900) DataCell(Text(filial['cnpjcpf'] ?? '', style: const TextStyle(fontSize: 12))),
+            if (largura > 1000) DataCell(Text(filial['celular1'] ?? '', style: const TextStyle(fontSize: 12))),
+            if (largura > 1100) DataCell(Text(filial['celular2'] ?? '', style: const TextStyle(fontSize: 12))),
+            if (largura > 1200) DataCell(Text(filial['telefone1'] ?? '', style: const TextStyle(fontSize: 12))),
+            if (largura > 1300) DataCell(Text(filial['telefone2'] ?? '', style: const TextStyle(fontSize: 12))),
+          ],
         );
-      },
-    );
+      }).toList(),
+    ),
+  );
+}
+
+
+Widget _buildListaMobile(TextStyle? textStyle) {
+  if (filiaisFiltradas.isEmpty) {
+    return const Center(child: Text('Nenhuma filial encontrada.'));
   }
+
+  return ListView.builder(
+    itemCount: filiaisFiltradas.length,
+    itemBuilder: (_, index) {
+      final filial = filiaisFiltradas[index];
+      final isEven = index % 2 == 0;
+      final backgroundColor = isEven ? Colors.blueGrey[100] : Colors.white;
+
+      return Card(
+        color: backgroundColor,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Coluna de botões (à esquerda)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.orange),
+                    onPressed: () => _abrirFormulario(filial: filial),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _confirmarExclusao(filial['idfilial']),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              // Dados (à direita)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(filial['nome'] ?? '', style: const TextStyle(fontSize: 12)),
+                    if ((filial['email'] ?? '').isNotEmpty)
+                      Text('Email: ${filial['email']}', style: const TextStyle(fontSize: 12)),
+                    if ((filial['cnpjcpf'] ?? '').isNotEmpty)
+                      Text('CNPJ: ${filial['cnpjcpf']}', style: const TextStyle(fontSize: 12)),
+                    if ((filial['celular1'] ?? '').isNotEmpty)
+                      Text('Celular: ${filial['celular1']}', style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+
+
 }

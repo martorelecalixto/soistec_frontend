@@ -1,5 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const double kFontSizeTitle = 20;
+const double kFontSizeSubtitle = 14;
+const double kFontSizeMenu = 12;
+const double kFontSizeFooter = 12;
+const double kMenuItemSpacing = 0.0; // Ajuste este valor conforme necessário
 
 class BaseLayout extends StatefulWidget {
   final String titulo;
@@ -60,59 +67,87 @@ class _BaseLayoutState extends State<BaseLayout> {
     if (label == 'Sair') {
       _logout();
     } else {
-      Navigator.pushReplacementNamed(context, '/${label.toLowerCase().replaceAll(' ', '_')}');
+      Navigator.pushReplacementNamed(
+        context,
+        '/${label.toLowerCase().replaceAll(' ', '_')}',
+      );
     }
   }
 
-  Widget _buildDrawerItem(String label, IconData icon) {
-    final bool selected = widget.titulo == label;
-    return ListTile(
-      leading: Icon(icon, color: selected ? Colors.blue : null),
-      title: isSidebarExpanded ? Text(label) : null,
-      tileColor: selected ? Colors.blue.shade100 : null,
-      onTap: () => _navegarPara(label),
-      hoverColor: Colors.blue.shade50,
-    );
-  }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      width: isSidebarExpanded ? 220 : 70,
-      child: Container(
-        color: Colors.blueGrey.shade50,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              child: isSidebarExpanded
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const FlutterLogo(size: 40),
-                        const SizedBox(height: 8),
-                        Text('Bem-vindo, $nome'),
-                        Text(email, style: const TextStyle(fontSize: 12)),
-                      ],
-                    )
-                  : const Center(child: FlutterLogo(size: 40)),
-            ),
-            ...menuItems.entries.map((item) => _buildDrawerItem(item.key, item.value)).toList(),
-            isSidebarExpanded
-                ? ListTile(
-                    leading: const Icon(Icons.arrow_back),
-                    title: const Text('Reduzir menu'),
-                    onTap: () => setState(() => isSidebarExpanded = false),
+Widget _buildDrawerItem(String label, IconData icon) {
+  final bool selected = widget.titulo == label;
+  return ListTile(
+    dense: true, // Reduz a altura vertical
+    contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
+    leading: Icon(icon, color: selected ? Colors.blue : null),
+    title: isSidebarExpanded
+        ? Text(
+            label,
+            style: const TextStyle(fontSize: kFontSizeMenu),
+          )
+        : null,
+    tileColor: selected ? Colors.blue.shade100 : null,
+    onTap: () => _navegarPara(label),
+    hoverColor: Colors.blue.shade50,
+  );
+}
+
+
+Widget _buildDrawer() {
+  return Drawer(
+    width: isSidebarExpanded ? 220 : 70,
+    child: Container(
+      color: Colors.blueGrey.shade50,
+      child: ListView(
+       // padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            child: isSidebarExpanded
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const FlutterLogo(size: 40),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Bem-vindo, $nome',
+                        style: const TextStyle(fontSize: kFontSizeMenu),
+                      ),
+                      Text(
+                        email,
+                        style: const TextStyle(fontSize: kFontSizeSubtitle),
+                      ),
+                    ],
                   )
-                : IconButton(
-                    icon: const Icon(Icons.arrow_forward),
-                    tooltip: 'Expandir menu',
-                    onPressed: () => setState(() => isSidebarExpanded = true),
+                : const Center(child: FlutterLogo(size: 40)),
+          ),
+          // Inserção de espaçamento entre os itens do menu
+          ...menuItems.entries
+              .map((item) => _buildDrawerItem(item.key, item.value))
+              .expand((widget) => [
+                    widget,
+                    SizedBox(height: kMenuItemSpacing),
+                  ]),
+          isSidebarExpanded
+              ? ListTile(
+                  leading: const Icon(Icons.arrow_back),
+                  title: const Text(
+                    'Reduzir menu',
+                    style: TextStyle(fontSize: kFontSizeMenu),
                   ),
-          ],
-        ),
+                  onTap: () => setState(() => isSidebarExpanded = false),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.arrow_forward),
+                  tooltip: 'Expandir menu',
+                  onPressed: () => setState(() => isSidebarExpanded = true),
+                ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -120,11 +155,19 @@ class _BaseLayoutState extends State<BaseLayout> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.titulo),
+        title: Text(
+          widget.titulo,
+          style: const TextStyle(fontSize: kFontSizeTitle),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Center(child: Text('Olá, $nome')),
+            child: Center(
+              child: Text(
+                'Olá, $nome',
+                style: const TextStyle(fontSize: kFontSizeMenu),
+              ),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -145,7 +188,10 @@ class _BaseLayoutState extends State<BaseLayout> {
                   color: Colors.grey.shade200,
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.center,
-                  child: const Text('© 2025 Sistrade'),
+                  child: const Text(
+                    '© 2025 Sistrade',
+                    style: TextStyle(fontSize: kFontSizeFooter),
+                  ),
                 ),
               ],
             ),

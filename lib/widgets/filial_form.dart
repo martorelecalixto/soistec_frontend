@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class FilialForm extends StatefulWidget {
   final Filial? filial;
 
-  const FilialForm({Key? key, this.filial}) : super(key: key);
+  const FilialForm({super.key, this.filial});
 
   @override
   _FilialFormState createState() => _FilialFormState();

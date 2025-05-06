@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'pages/login_page.dart';
 import 'pages/cadastro_page.dart';
@@ -39,6 +40,22 @@ class SistradeApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+
+            // AQUI DEFINE A FONTE E TAMANHOS GLOBAIS
+            textTheme: GoogleFonts.robotoTextTheme(
+              const TextTheme(
+                displayLarge: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
+                displayMedium: TextStyle(fontSize: 28.0),
+                displaySmall: TextStyle(fontSize: 24.0),
+                headlineMedium: TextStyle(fontSize: 20.0),
+                headlineSmall: TextStyle(fontSize: 18.0),
+                titleLarge: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                bodyLarge: TextStyle(fontSize: 16.0),
+                bodyMedium: TextStyle(fontSize: 14.0),
+                labelLarge: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w500),
+              ),
+            ),
+
           ),
           home: isLoggedIn ? const HomePage() : const LoginPage(),
           routes: {
