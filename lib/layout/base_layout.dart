@@ -71,6 +71,7 @@ class _BaseLayoutState extends State<BaseLayout> {
         context,
         '/${label.toLowerCase().replaceAll(' ', '_')}',
       );
+     // print(label.toLowerCase().replaceAll(' ', '_'));
     }
   }
 
@@ -107,7 +108,8 @@ Widget _buildDrawer() {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const FlutterLogo(size: 40),
+                      //const FlutterLogo(size: 40),
+                      Image.asset('../assets/logo.png', height: 40),
                       const SizedBox(height: 8),
                       Text(
                         'Bem-vindo, $nome',
@@ -119,7 +121,7 @@ Widget _buildDrawer() {
                       ),
                     ],
                   )
-                : const Center(child: FlutterLogo(size: 40)),
+                : Center(child: Image.asset('../assets/logo.png', height: 40)),
           ),
           // Inserção de espaçamento entre os itens do menu
           ...menuItems.entries

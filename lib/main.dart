@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'pages/login_page.dart';
 import 'pages/cadastro_page.dart';
 import 'pages/home_page.dart';
+import 'pages/atividade/atividade_page.dart';
+import 'pages/filial/filial_page.dart';
 
 void main() {
   runApp(const SistradeApp());
@@ -62,6 +64,8 @@ class SistradeApp extends StatelessWidget {
             '/login': (context) => const LoginPage(),
             '/cadastro': (context) => const CadastroPage(),
             '/home': (context) => const HomePage(),
+            '/atividade': (context) => const AtividadePage(),
+            '/filial': (context) => const FilialPage(),
           },
         );
       },

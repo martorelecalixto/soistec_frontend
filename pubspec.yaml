@@ -27,8 +27,8 @@ flutter:
   uses-material-design: true
 
   # Se desejar adicionar assets, descomente e edite as linhas abaixo:
-  # assets:
-  #   - images/
+  assets:
+     - assets/logo.png
 
   # Se desejar adicionar fontes personalizadas, edite aqui:
   # fonts:

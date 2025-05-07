@@ -10,7 +10,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class FilialForm extends StatefulWidget {
   final Filial? filial;
-
   const FilialForm({super.key, this.filial});
 
   @override
@@ -43,6 +42,8 @@ class _FilialFormState extends State<FilialForm> {
   final _cnpjCpfMask = MaskTextInputFormatter(mask: '##.###.###/####-##');
   final _telefoneMask = MaskTextInputFormatter(mask: '(##) #####-####');
   final _cepMask = MaskTextInputFormatter(mask: '#####-###');
+
+  final double fontSize = 12.0; // tamanho padrão da fonte  
 
   @override
   void initState() {
@@ -141,6 +142,7 @@ class _FilialFormState extends State<FilialForm> {
     } else {
       columns = 1;
     }
+   
 
     // Lista de campos com suas respectivas larguras em colunas
     final fields = [
@@ -180,7 +182,7 @@ class _FilialFormState extends State<FilialForm> {
         Expanded(
           flex: colSpan,
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0), // menor espaçamento  //const EdgeInsets.all(8.0),
             child: field['widget'] as Widget,
           ),
         ),
@@ -199,6 +201,32 @@ class _FilialFormState extends State<FilialForm> {
     );
   }
 
+Widget _buildTextField(
+  TextEditingController controller,
+  String label, {
+  bool validator = false,
+  List<TextInputFormatter>? inputFormatters,
+  TextInputType? keyboardType,
+  void Function(String)? onFieldSubmitted,
+}) {
+  return TextFormField(
+    controller: controller,
+    style: TextStyle(fontSize: fontSize),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(fontSize: fontSize),
+      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+    ),
+    validator: validator ? (value) => value!.isEmpty ? 'Informe o $label' : null : null,
+    inputFormatters: inputFormatters,
+    keyboardType: keyboardType,
+    onFieldSubmitted: onFieldSubmitted,
+  );
+}
+
+
+
+/*
   Widget _buildTextField(
     TextEditingController controller,
     String label, {
@@ -216,7 +244,109 @@ class _FilialFormState extends State<FilialForm> {
       onFieldSubmitted: onFieldSubmitted,
     );
   }
+*/
 
+
+
+
+
+@override
+Widget build(BuildContext context) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          top: 8,
+          left: 16,
+          right: 16,
+        ),
+        child: SingleChildScrollView(
+          child: IntrinsicHeight(
+            child: Form(
+              key: _formKey,
+              child: 
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Cadastro de Filial',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildResponsiveForm(constraints.maxWidth),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                              child: const Text('Cancelar', style: TextStyle(color: Colors.black)),
+                            ),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              onPressed: _salvar,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                              child: const Text('Salvar'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+              
+              
+              /*Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildResponsiveForm(constraints.maxWidth),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          textStyle: TextStyle(fontSize: fontSize),
+                        ),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _salvar,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          textStyle: TextStyle(fontSize: fontSize),
+                        ),
+                        child: const Text('Salvar'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),*/
+
+
+
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+
+/*
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -256,4 +386,5 @@ class _FilialFormState extends State<FilialForm> {
       },
     );
   }
+  */
 }
