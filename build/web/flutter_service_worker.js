@@ -8,8 +8,8 @@ const RESOURCES = {"assets/AssetManifest.bin": "bda69b2d94259a62c8374769b8373c49
 "assets/AssetManifest.json": "491f300584ee76691ac1f791d93d4b8e",
 "assets/assets/logo.png": "0365ef530fd286d141e8ae5e3d590f85",
 "assets/FontManifest.json": "dc3d03800ccca4601324923c0b1d6d57",
-"assets/fonts/MaterialIcons-Regular.otf": "79884619551adccb6a85f08b8053cb0a",
-"assets/NOTICES": "f3b454914827fdbefa92b1dc5f7ec122",
+"assets/fonts/MaterialIcons-Regular.otf": "69db5ae16afc21f16c67e9a488968ad7",
+"assets/NOTICES": "0a4dbc74f099b65e68bc5e442254e8a0",
 "assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": "33b7d9392238c04c131b6ce224e13711",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
 "canvaskit/canvaskit.js": "86e461cf471c1640fd2b461ece4589df",
@@ -28,7 +28,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "bda69b2d94259a62c8374769b8373c49
 "favicon.ico": "6b6b54bfa264c9c4ee4e03912e18f8d4",
 "favicon.png": "15a0148cec14d19ce5cec8b9e7e8c57f",
 "flutter.js": "76f08d47ff9f5715220992f993002504",
-"flutter_bootstrap.js": "9169bede2c742698ada71ef24e4386d8",
+"flutter_bootstrap.js": "1a7dc066eeec8e95088988dc335c485e",
 "icons/Icon-192+.png": "ac9a721a12bbc803b44f645561ecb1e1",
 "icons/Icon-192.png": "0365ef530fd286d141e8ae5e3d590f85",
 "icons/Icon-512+.png": "96e752610906ba2a93c65f8abe1645f1",
@@ -39,7 +39,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "bda69b2d94259a62c8374769b8373c49
 "icons/Icon-maskable-512.png": "0365ef530fd286d141e8ae5e3d590f85",
 "index.html": "8a8cbd3fa05899d15303efde1f02d854",
 "/": "8a8cbd3fa05899d15303efde1f02d854",
-"main.dart.js": "4cd59540618c93aba8b32c9d507ef64b",
+"main.dart.js": "05ee4bf9fcdc85e765d1ea7f3ef71929",
 "manifest.json": "2e398ca0307a6410f63b9349641b51c5",
 "version.json": "9a674bc7c7184dcb6446ddc06d13fdee"};
 // The application shell files that are downloaded before a service worker can
