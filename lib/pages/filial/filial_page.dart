@@ -61,35 +61,6 @@ void _filtrarFiliais(String valor) {
   setState(() => filiaisFiltradas = filtradas);
 }
 
-/*
-void _abrirFormulario({Map<String, dynamic>? filial}) async {
-  final resultado = await showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (context) => FractionallySizedBox(
-      heightFactor: 0.95, // Ocupa 95% da altura da tela
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          left: 16,
-          right: 16,
-          top: 24,
-        ),
-        child: FilialForm(
-          filial: filial != null ? Filial.fromJson(filial) : null,
-        ),
-      ),
-    ),
-  );
-
-  if (resultado == true) _carregarFiliais();
-}
-*/
-
 
   void _abrirFormulario({Map<String, dynamic>? filial}) async {
     final resultado = await showModalBottomSheet<bool>(

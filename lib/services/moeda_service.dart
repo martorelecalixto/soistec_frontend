@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/filial_model.dart';
+import '../models/moeda_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class FilialService {
-  static const String baseUrl = 'https://soistec-api.onrender.com/api/filiais';
+class MoedaService {
+  static const String baseUrl = 'https://soistec-api.onrender.com/api/moedas';
 
 
-
-  static Future<List<Filial>> getFiliaisDropDown() async {
+  static Future<List<Moeda>> getMoedasDropDown() async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
 
@@ -26,17 +25,15 @@ class FilialService {
     if (response.statusCode == 200) {
       final List jsonData = json.decode(response.body);
 
-      //print('Dados filial_service: $jsonData');
+      //print('Dados atividades_service: $jsonData');
 
-      return jsonData.map((e) => Filial.fromJson(e)).toList();
+      return jsonData.map((e) => Moeda.fromJson(e)).toList();
     } else {
-      throw Exception('Erro ao carregar filiais');
+      throw Exception('Erro ao carregar moedas');
     }
   }
 
-
-
-  static Future<List<Filial>> getFiliais({String? nome}) async {
+  static Future<List<Moeda>> getMoedas({String? nome}) async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
 
@@ -47,8 +44,6 @@ class FilialService {
     final queryParams = {
       'empresa': empresa,
       'nome': nome ?? '',
-      'cnpjcpf': '',
-      'email': '',
     };
 
     final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
@@ -57,37 +52,37 @@ class FilialService {
     if (response.statusCode == 200) {
       final List jsonData = json.decode(response.body);
 
-      //print('Dados filial_service: $jsonData');
+      //print('Dados atividades_service: $jsonData');
 
-      return jsonData.map((e) => Filial.fromJson(e)).toList();
+      return jsonData.map((e) => Moeda.fromJson(e)).toList();
     } else {
-      throw Exception('Erro ao carregar filiais');
+      throw Exception('Erro ao carregar moedas');
     }
   }
 
 
-  static Future<bool> createFilial(Filial filial) async {
-    final resultado = json.encode(filial.toJson());
+  static Future<bool> createMoeda(Moeda moeda) async {
+    final resultado = json.encode(moeda.toJson());
     //print('Dados decodificados: $resultado');
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(filial.toJson()),
+      body: json.encode(moeda.toJson()),
     );
     return response.statusCode == 201;
   }
 
-  static Future<bool> updateFilial(Filial filial) async {
+  static Future<bool> updateMoeda(Moeda moeda) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/${filial.idfilial}'),
+      Uri.parse('$baseUrl/${moeda.idmoeda}'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(filial.toJson()),
+      body: json.encode(moeda.toJson()),
     );
     return response.statusCode == 200;
   }
 
-  static Future<bool> deleteFilial(int idfilial) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$idfilial'));
+  static Future<bool> deleteMoeda(int idmoeda) async {
+    final response = await http.delete(Uri.parse('$baseUrl/$idmoeda'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
 }

@@ -7,6 +7,7 @@ import 'pages/cadastro_page.dart';
 import 'pages/home_page.dart';
 import 'pages/atividade/atividade_page.dart';
 import 'pages/filial/filial_page.dart';
+import 'pages/vendabilhete/vendabilhete_page.dart';
 
 void main() {
   runApp(const SistradeApp());
@@ -66,6 +67,7 @@ class SistradeApp extends StatelessWidget {
             '/home': (context) => const HomePage(),
             '/atividade': (context) => const AtividadePage(),
             '/filial': (context) => const FilialPage(),
+            '/vendabilhete': (context) => const VendaBilhetePage(),
           },
         );
       },

@@ -32,7 +32,7 @@ class _BaseLayoutState extends State<BaseLayout> {
     'Filial': Icons.account_tree,
     'Atividade': Icons.work,
     'Entidade': Icons.account_balance,
-    'Venda Bilhete': Icons.confirmation_number,
+    'VendaBilhete': Icons.confirmation_number,
     'Venda Serviço': Icons.miscellaneous_services,
     'Emissão Fatura': Icons.receipt_long,
     'Reemissão Fatura': Icons.receipt,

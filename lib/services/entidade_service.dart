@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/filial_model.dart';
+import '../models/entidade_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class FilialService {
-  static const String baseUrl = 'https://soistec-api.onrender.com/api/filiais';
+class EntidadeService {
+  static const String baseUrl = 'https://soistec-api.onrender.com/api/entidades';
 
 
-
-  static Future<List<Filial>> getFiliaisDropDown() async {
+  static Future<List<Entidade>> getClientesDropDown() async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
 
@@ -28,15 +27,13 @@ class FilialService {
 
       //print('Dados filial_service: $jsonData');
 
-      return jsonData.map((e) => Filial.fromJson(e)).toList();
+      return jsonData.map((e) => Entidade.fromJson(e)).toList();
     } else {
-      throw Exception('Erro ao carregar filiais');
+      throw Exception('Erro ao carregar clientes');
     }
   }
 
-
-
-  static Future<List<Filial>> getFiliais({String? nome}) async {
+  static Future<List<Entidade>> getEntidades({String? nome}) async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
 
@@ -59,35 +56,35 @@ class FilialService {
 
       //print('Dados filial_service: $jsonData');
 
-      return jsonData.map((e) => Filial.fromJson(e)).toList();
+      return jsonData.map((e) => Entidade.fromJson(e)).toList();
     } else {
-      throw Exception('Erro ao carregar filiais');
+      throw Exception('Erro ao carregar entidades');
     }
   }
 
 
-  static Future<bool> createFilial(Filial filial) async {
-    final resultado = json.encode(filial.toJson());
+  static Future<bool> createEntidade(Entidade entidade) async {
+    final resultado = json.encode(entidade.toJson());
     //print('Dados decodificados: $resultado');
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(filial.toJson()),
+      body: json.encode(entidade.toJson()),
     );
     return response.statusCode == 201;
   }
 
-  static Future<bool> updateFilial(Filial filial) async {
+  static Future<bool> updateEntidade(Entidade entidade) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/${filial.idfilial}'),
+      Uri.parse('$baseUrl/${entidade.identidade}'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(filial.toJson()),
+      body: json.encode(entidade.toJson()),
     );
     return response.statusCode == 200;
   }
 
-  static Future<bool> deleteFilial(int idfilial) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$idfilial'));
+  static Future<bool> deletefilial(int identidade) async {
+    final response = await http.delete(Uri.parse('$baseUrl/$identidade'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
 }
