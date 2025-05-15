@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sistrade/layout/base_layout.dart';
@@ -13,7 +14,6 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
-
 
 
 String _formatarData(dynamic data) {
@@ -100,6 +100,22 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
         'entidade': f.entidade,
         'pagamento': f.pagamento,
         'valortotal': f.valortotal,
+        'descontototal': f.descontototal,
+        'valorentrada': f.valorentrada,
+        'observacao': f.observacao,
+        'solicitante': f.solicitante,
+        'identidade': f.identidade,
+        'empresa': f.empresa,
+        'datavencimento': f.datavencimento,
+        'idmoeda': f.idmoeda,
+        'idvendedor': f.idvendedor,
+        'idemissor': f.idemissor,
+        'idformapagamento': f.idformapagamento,
+        'idcentrocusto': f.idfilial, 
+        'idfatura': f.idfatura,
+        'idreciboreceber': f.idreciboreceber,
+        'idgrupo': f.idgrupo,
+
       }).toList();
 
       setState(() {
@@ -124,19 +140,24 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
     setState(() => vendabilheteFiltradas = filtradas);
   }
 
-  void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
-    final resultado = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
+  final resultado = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => AlertDialog(
+      contentPadding: EdgeInsets.zero,
+      content: SizedBox(
+        width: 1200,
+        height: 800,
         child: VendaBilheteForm(
           vendabilhete: vendabilhete != null ? VendaBilhete.fromJson(vendabilhete) : null,
         ),
       ),
-    );
-    if (resultado == true) _carregarVendaBilhete();
-  }
+    ),
+  );
+
+ if (resultado == true) _carregarVendaBilhete();
+}
 
   void _confirmarExclusao(int idvenda) async {
     final confirmar = await showDialog<bool>(
@@ -205,39 +226,6 @@ void _imprimirPDF() async {
   );
 }
 
-
-/*
-void _imprimirPDF() async {
-  final pdf = pw.Document();
-  final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
-
-  pdf.addPage(
-    pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      build: (pw.Context context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('Relatório de Vendas - $dataAtual', style: pw.TextStyle(fontSize: 18)),
-            pw.SizedBox(height: 20),
-            for (int i = 0; i < vendabilheteFiltradas.length; i++)
-              pw.Text(
-                '${vendabilheteFiltradas[i]['id']} - '
-                '${vendabilheteFiltradas[i]['entidade']} - '
-                '${_formatarMoeda(vendabilheteFiltradas[i]['valortotal'])}',
-                style: pw.TextStyle(fontSize: 12),
-              ),
-          ],
-        );
-      },
-    ),
-  );
-
-
-  // Exibir o PDF na tela (print preview)
-  await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
-}
-*/
 
 @override
 Widget build(BuildContext context) {

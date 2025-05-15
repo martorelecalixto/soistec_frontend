@@ -4,11 +4,12 @@
   import 'package:http/http.dart' as http;
   import '../models/vendabilhete_model.dart';
   import 'package:shared_preferences/shared_preferences.dart';
+  import '../config.dart'; // importa o arquivo de configuração
 
   class VendaBilheteService {
-    //static const String baseUrl = 'https://soistec-api.onrender.com/api/vendasbilhete';
-     static const String baseUrl = 'http://localhost:3000/api/vendasbilhete';
-
+     // lib/service/meuService.js
+     static const String Url = '${AppConfig.baseUrl}/api/vendasbilhete';
+    
     static Future<List<VendaBilhete>> getVendaBilhetes({String? idfilial, String? idcliente, String? idmoeda, DateTime? datainicial, DateTime? datafinal}) async {
       final prefs = await SharedPreferences.getInstance();
       final empresa = prefs.getString('empresa');
@@ -31,7 +32,7 @@
         'datafinal': dataFinalStr ?? '',
       };
 
-      final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+      final uri = Uri.parse(Url).replace(queryParameters: queryParams);
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
@@ -48,7 +49,7 @@
       final resultado = json.encode(venda.toJson());
       //print('Dados decodificados: $resultado');
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse(Url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(venda.toJson()),
       );
@@ -57,7 +58,7 @@
 
     static Future<bool> updateVendaBilhete(VendaBilhete venda) async {
       final response = await http.put(
-        Uri.parse('$baseUrl/${venda.idvenda}'),
+        Uri.parse('$Url/${venda.idvenda}'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(venda.toJson()),
       );
@@ -65,7 +66,7 @@
     }
 
     static Future<bool> deleteVendaBilhete(int idvenda) async {
-      final response = await http.delete(Uri.parse('$baseUrl/$idvenda'));
+      final response = await http.delete(Uri.parse('$Url/$idvenda'));
       return response.statusCode == 200 || response.statusCode == 204;
     }
   }

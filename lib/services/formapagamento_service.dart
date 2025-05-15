@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/atividade_model.dart';
+import '../models/formapagamento_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config.dart'; // importa o arquivo de configuração
 
-class AtividadeService {
+class FormaPagamentoService {
   // lib/service/meuService.js
-  static const String Url = '${AppConfig.baseUrl}/api/atividades';  
+  static const String Url = '${AppConfig.baseUrl}/api/formaspagamento';  
   //static const String baseUrl = 'https://soistec-api.onrender.com/api/atividades';
 
-  static Future<List<Atividade>> getAtividadesDropDown() async {
+  static Future<List<FormaPagamento>> getFormasPagamentoDropDown() async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
 
@@ -29,13 +29,13 @@ class AtividadeService {
 
       //print('Dados atividades_service: $jsonData');
 
-      return jsonData.map((e) => Atividade.fromJson(e)).toList();
+      return jsonData.map((e) => FormaPagamento.fromJson(e)).toList();
     } else {
-      throw Exception('Erro ao carregar atividades');
+      throw Exception('Erro ao carregar forma pagamento');
     }
   }
 
-  static Future<List<Atividade>> getAtividades({String? nome}) async {
+  static Future<List<FormaPagamento>> getFormasPagamento({String? nome}) async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
 
@@ -56,34 +56,35 @@ class AtividadeService {
 
       //print('Dados atividades_service: $jsonData');
 
-      return jsonData.map((e) => Atividade.fromJson(e)).toList();
+      return jsonData.map((e) => FormaPagamento.fromJson(e)).toList();
     } else {
-      throw Exception('Erro ao carregar atividades');
+      throw Exception('Erro ao carregar forma pagamento');
     }
   }
 
-  static Future<bool> createAtividade(Atividade atividade) async {
-    final resultado = json.encode(atividade.toJson());
+
+  static Future<bool> createFormaPagamento(FormaPagamento formapagamento) async {
+    final resultado = json.encode(formapagamento.toJson());
     print('Dados decodificados: $resultado');
     final response = await http.post(
       Uri.parse(Url),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(atividade.toJson()),
+      body: json.encode(formapagamento.toJson()),
     );
     return response.statusCode == 201;
   }
 
-  static Future<bool> updateAtividade(Atividade atividade) async {
+  static Future<bool> updateFormaPagamento(FormaPagamento formapagamento) async {
     final response = await http.put(
-      Uri.parse('$Url/${atividade.id}'),
+      Uri.parse('$Url/${formapagamento.idformapagamento}'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(atividade.toJson()),
+      body: json.encode(formapagamento.toJson()),
     );
     return response.statusCode == 200;
   }
 
-  static Future<bool> deleteAtividade(int id) async {
-    final response = await http.delete(Uri.parse('$Url/$id'));
+  static Future<bool> deleteFormaPagamento(int idformapagamento) async {
+    final response = await http.delete(Uri.parse('$Url/$idformapagamento'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
 }

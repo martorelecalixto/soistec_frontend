@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/moeda_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart'; // importa o arquivo de configuração
 
 class MoedaService {
-  static const String baseUrl = 'https://soistec-api.onrender.com/api/moedas';
+  // lib/service/meuService.js
+  static const String Url = '${AppConfig.baseUrl}/api/moedas';
+  //static const String baseUrl = 'https://soistec-api.onrender.com/api/moedas';
 
 
   static Future<List<Moeda>> getMoedasDropDown() async {
@@ -19,7 +22,7 @@ class MoedaService {
       'empresa': empresa,
     };
 
-    final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+    final uri = Uri.parse(Url).replace(queryParameters: queryParams);
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
@@ -46,7 +49,7 @@ class MoedaService {
       'nome': nome ?? '',
     };
 
-    final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+    final uri = Uri.parse(Url).replace(queryParameters: queryParams);
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
@@ -65,7 +68,7 @@ class MoedaService {
     final resultado = json.encode(moeda.toJson());
     //print('Dados decodificados: $resultado');
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse(Url),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(moeda.toJson()),
     );
@@ -74,7 +77,7 @@ class MoedaService {
 
   static Future<bool> updateMoeda(Moeda moeda) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/${moeda.idmoeda}'),
+      Uri.parse('$Url/${moeda.idmoeda}'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(moeda.toJson()),
     );
@@ -82,7 +85,7 @@ class MoedaService {
   }
 
   static Future<bool> deleteMoeda(int idmoeda) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$idmoeda'));
+    final response = await http.delete(Uri.parse('$Url/$idmoeda'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
 }

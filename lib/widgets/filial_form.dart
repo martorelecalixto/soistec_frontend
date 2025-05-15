@@ -225,31 +225,6 @@ Widget _buildTextField(
 }
 
 
-
-/*
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label, {
-    bool validator = false,
-    List<TextInputFormatter>? inputFormatters,
-    TextInputType? keyboardType,
-    void Function(String)? onFieldSubmitted,
-  }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label),
-      validator: validator ? (value) => value!.isEmpty ? 'Informe o $label' : null : null,
-      inputFormatters: inputFormatters,
-      keyboardType: keyboardType,
-      onFieldSubmitted: onFieldSubmitted,
-    );
-  }
-*/
-
-
-
-
-
 @override
 Widget build(BuildContext context) {
   return LayoutBuilder(
@@ -304,38 +279,6 @@ Widget build(BuildContext context) {
                       ],
                     ),
               
-              
-              /*Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildResponsiveForm(constraints.maxWidth),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          textStyle: TextStyle(fontSize: fontSize),
-                        ),
-                        child: const Text('Cancelar'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _salvar,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          textStyle: TextStyle(fontSize: fontSize),
-                        ),
-                        child: const Text('Salvar'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),*/
-
-
 
             ),
           ),
@@ -346,45 +289,4 @@ Widget build(BuildContext context) {
 }
 
 
-/*
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            top: 16,
-            left: 16,
-            right: 16,
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _buildResponsiveForm(constraints.maxWidth),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancelar'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _salvar,
-                        child: const Text('Salvar'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-  */
 }

@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/filial_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart'; // importa o arquivo de configuração
 
 class FilialService {
-  static const String baseUrl = 'https://soistec-api.onrender.com/api/filiais';
-
-
+  // lib/service/meuService.js
+  static const String Url = '${AppConfig.baseUrl}/api/filiais';
+  //static const String baseUrl = 'https://soistec-api.onrender.com/api/filiais';
 
   static Future<List<Filial>> getFiliaisDropDown() async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,7 +21,7 @@ class FilialService {
       'empresa': empresa,
     };
 
-    final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+    final uri = Uri.parse(Url).replace(queryParameters: queryParams);
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
@@ -33,8 +34,6 @@ class FilialService {
       throw Exception('Erro ao carregar filiais');
     }
   }
-
-
 
   static Future<List<Filial>> getFiliais({String? nome}) async {
     final prefs = await SharedPreferences.getInstance();
@@ -51,7 +50,7 @@ class FilialService {
       'email': '',
     };
 
-    final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+    final uri = Uri.parse(Url).replace(queryParameters: queryParams);
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
@@ -65,12 +64,11 @@ class FilialService {
     }
   }
 
-
   static Future<bool> createFilial(Filial filial) async {
     final resultado = json.encode(filial.toJson());
     //print('Dados decodificados: $resultado');
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse(Url),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(filial.toJson()),
     );
@@ -79,7 +77,7 @@ class FilialService {
 
   static Future<bool> updateFilial(Filial filial) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/${filial.idfilial}'),
+      Uri.parse('$Url/${filial.idfilial}'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(filial.toJson()),
     );
@@ -87,7 +85,7 @@ class FilialService {
   }
 
   static Future<bool> deleteFilial(int idfilial) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$idfilial'));
+    final response = await http.delete(Uri.parse('$Url/$idfilial'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
 }

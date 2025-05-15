@@ -54,7 +54,7 @@ class _AtividadePageState extends State<AtividadePage> {
 }
 
 
-void _abrirFormulario({Map<String, dynamic>? atividade}) async {
+ void _abrirFormulario({Map<String, dynamic>? atividade}) async {
   final resultado = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -72,25 +72,6 @@ void _abrirFormulario({Map<String, dynamic>? atividade}) async {
 
   if (resultado == true) _carregarAtividades();
 }
-
-
-/*
- void _abrirFormulario({Map<String, dynamic>? atividade}) async {
-    final resultado = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: AtividadeForm(
-          atividade: atividade != null ? Atividade.fromJson(atividade) : null,
-        ),
-      ),
-    );
-    if (resultado == true) _carregarAtividades();
-  }
-*/
 
 
   void _confirmarExclusao(int id) async {
@@ -212,59 +193,6 @@ Widget _buildTabelaWeb(TextStyle? textStyle, double largura) {
     ),
   );
 }
-
-
-
-/*
-Widget _buildTabelaWeb(TextStyle? textStyle, double largura) {
-  if (atividadesFiltradas.isEmpty) {
-    return const Center(child: Text('Nenhuma atividade encontrada.'));
-  }
-
-  return Expanded(
-    child: SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Text('Ações', style: TextStyle(fontSize: 12))),
-            DataColumn(label: Text('Nome', style: TextStyle(fontSize: 12))),
-          ],
-          rows: atividadesFiltradas.asMap().entries.map((entry) {
-            final index = entry.key;
-            final atividade = entry.value;
-            final isEven = index % 2 == 0;
-
-            return DataRow(
-              color: MaterialStateProperty.resolveWith<Color?>(
-                (Set<MaterialState> states) =>
-                    isEven ? Colors.blueGrey[100] : Colors.white,
-              ),
-              cells: [
-                DataCell(Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.orange),
-                      onPressed: () => _abrirFormulario(atividade: atividade),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _confirmarExclusao(atividade['id']),
-                    ),
-                  ],
-                )),
-                DataCell(Text(atividade['nome'] ?? '',
-                    style: const TextStyle(fontSize: 12))),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
-    ),
-  );
-}
-*/
 
 
 Widget _buildListaMobile(TextStyle? textStyle) {

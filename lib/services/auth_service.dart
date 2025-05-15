@@ -1,15 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart'; // importa o arquivo de configuração
 
 class AuthService {
-  static const String apiUrl = 'https://soistec-api.onrender.com';
+  // lib/service/meuService.js
+  static const String apiUrl ='${AppConfig.baseUrl}';
+  //static const String Url = '${AppConfig.baseUrl}/api/vendasbilhete';
+
+  //static const String apiUrl = 'https://soistec-api.onrender.com';
 
   // Função para cadastrar o usuário
   static Future<Map<String, dynamic>> cadastrarUsuario(
       String nome, String email, String senha) async {
     try {
       final response = await http.post(
+       // Uri.parse('$apiUrl/api/usuarios'),
         Uri.parse('$apiUrl/api/usuarios'),
         headers: {
           'Content-Type': 'application/json',
