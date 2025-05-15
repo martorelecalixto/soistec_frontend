@@ -14,6 +14,11 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
+//import 'package:pdf_google_fonts/pdf_google_fonts.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 
 String _formatarData(dynamic data) {
@@ -179,7 +184,58 @@ void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
 
 
 
-/*
+Future<void> _imprimirPDF(List<Map<String, dynamic>> vendabilheteFiltradas, String Function(num) _formatarMoeda) async {
+  final pdf = pw.Document();
+  final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
+
+  // Carrega a fonte Roboto
+  final fontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+  final roboto = pw.Font.ttf(fontData.buffer.asByteData());
+
+  pdf.addPage(
+    pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      build: (pw.Context context) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              'Relatório de Vendas - $dataAtual',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, font: roboto),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              children: [
+                pw.Expanded(child: pw.Text('ID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto))),
+                pw.Expanded(flex: 2, child: pw.Text('Entidade', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto))),
+                pw.Expanded(child: pw.Text('Valor', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto))),
+              ],
+            ),
+            pw.Divider(),
+            ...vendabilheteFiltradas.map((item) {
+              return pw.Row(
+                children: [
+                  pw.Expanded(child: pw.Text('${item['id'] ?? ''}', style: pw.TextStyle(font: roboto))),
+                  pw.Expanded(flex: 2, child: pw.Text('${item['entidade'] ?? ''}', style: pw.TextStyle(font: roboto))),
+                  pw.Expanded(child: pw.Text('${_formatarMoeda(item['valortotal'] ?? 0)}', style: pw.TextStyle(font: roboto))),
+                ],
+              );
+            }).toList(),
+          ],
+        );
+      },
+    ),
+  );
+
+  // Força download/compartilhamento do PDF
+  await Printing.sharePdf(
+    bytes: await pdf.save(),
+    filename: 'relatorio_vendas.pdf',
+  );
+}
+
+
+/* POPUP
 void _imprimirPDF() async {
   final pdf = pw.Document();
   final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -229,6 +285,8 @@ void _imprimirPDF() async {
 }
 */
 
+
+/* DOWNLOAD
 void _imprimirPDF() async {
   final pdf = pw.Document();
   final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -274,7 +332,7 @@ void _imprimirPDF() async {
     filename: 'relatorio_vendas.pdf',
   );
 }
-
+*/
 
 @override
 Widget build(BuildContext context) {
@@ -428,7 +486,7 @@ Widget build(BuildContext context) {
               const SizedBox(width: 8),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: _imprimirPDF,
+                onPressed: () => _imprimirPDF(vendabilheteFiltradas, _formatarMoeda),//_imprimirPDF,
                 icon: const Icon(Icons.picture_as_pdf),
                 label: const Text('Imprimir PDF'),
               ),
