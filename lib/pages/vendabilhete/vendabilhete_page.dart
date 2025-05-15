@@ -184,55 +184,127 @@ void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
 
 
 
+
 Future<void> _imprimirPDF(List<Map<String, dynamic>> vendabilheteFiltradas, String Function(num) _formatarMoeda) async {
   final pdf = pw.Document();
   final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-  // Carrega a fonte Roboto
   final fontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
   final roboto = pw.Font.ttf(fontData.buffer.asByteData());
+
+  final totalGeral = vendabilheteFiltradas.fold<num>(0, (soma, item) => soma + (item['valortotal'] ?? 0));
 
   pdf.addPage(
     pw.Page(
       pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(24),
       build: (pw.Context context) {
         return pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(
-              'Relatório de Vendas - $dataAtual',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, font: roboto),
+            // Cabeçalho
+            pw.Center(
+              child: pw.Text(
+                'Relatório de Vendas',
+                style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, font: roboto),
+              ),
+            ),
+            pw.SizedBox(height: 5),
+            pw.Center(
+              child: pw.Text(
+                'Data de emissão: $dataAtual',
+                style: pw.TextStyle(fontSize: 12, font: roboto),
+              ),
             ),
             pw.SizedBox(height: 20),
-            pw.Row(
+
+            // Tabela com cabeçalho em fundo cinza
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.5),
+              columnWidths: {
+                0: pw.FlexColumnWidth(1),
+                1: pw.FlexColumnWidth(2),
+                2: pw.FlexColumnWidth(2),
+                3: pw.FlexColumnWidth(2),
+                4: pw.FlexColumnWidth(1.5),
+              },
               children: [
-                pw.Expanded(child: pw.Text('ID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto))),
-                pw.Expanded(flex: 2, child: pw.Text('Entidade', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto))),
-                pw.Expanded(child: pw.Text('Valor', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto))),
+                // Cabeçalho da tabela
+                pw.TableRow(
+                  decoration: pw.BoxDecoration(color: PdfColors.grey300),
+                  children: [
+                    _celulaCabecalho('ID', roboto),
+                  //  _celulaCabecalho('Data', roboto),
+                    _celulaCabecalho('Entidade', roboto),
+                    _celulaCabecalho('Pagamento', roboto),
+                    _celulaCabecalho('Valor', roboto),
+                  ],
+                ),
+                // Linhas de dados
+                ...vendabilheteFiltradas.map((item) {
+                  return pw.TableRow(
+                    children: [
+                      _celula('${item['id'] ?? ''}', roboto),
+                   //   _celula('${item['datavenda'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item['datavenda'])) : ''}', roboto),
+                      _celula('${item['entidade'] ?? ''}', roboto),
+                      _celula('${item['pagamento'] ?? ''}', roboto),
+                      _celula(_formatarMoeda(item['valortotal'] ?? 0), roboto, alignRight: true),
+                    ],
+                  );
+                }).toList(),
+                // Total
+                pw.TableRow(
+                  decoration: pw.BoxDecoration(color: PdfColors.grey200),
+                  children: [
+                    pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),
+                    pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),
+                    pw.Container(
+                      padding: pw.EdgeInsets.all(8),
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text('TOTAL:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto)),
+                    ),
+                    pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),
+                    pw.Container(
+                      padding: pw.EdgeInsets.all(8),
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text(_formatarMoeda(totalGeral), style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto)),
+                    ),
+                  ],
+                ),
               ],
             ),
-            pw.Divider(),
-            ...vendabilheteFiltradas.map((item) {
-              return pw.Row(
-                children: [
-                  pw.Expanded(child: pw.Text('${item['id'] ?? ''}', style: pw.TextStyle(font: roboto))),
-                  pw.Expanded(flex: 2, child: pw.Text('${item['entidade'] ?? ''}', style: pw.TextStyle(font: roboto))),
-                  pw.Expanded(child: pw.Text('${_formatarMoeda(item['valortotal'] ?? 0)}', style: pw.TextStyle(font: roboto))),
-                ],
-              );
-            }).toList(),
           ],
         );
       },
     ),
   );
 
-  // Força download/compartilhamento do PDF
   await Printing.sharePdf(
     bytes: await pdf.save(),
     filename: 'relatorio_vendas.pdf',
   );
 }
+
+// Funções auxiliares para células
+pw.Widget _celula(String texto, pw.Font fonte, {bool alignRight = false}) {
+  return pw.Container(
+    padding: const pw.EdgeInsets.all(6),
+    alignment: alignRight ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+    child: pw.Text(texto, style: pw.TextStyle(font: fonte, fontSize: 10)),
+  );
+}
+
+pw.Widget _celulaCabecalho(String texto, pw.Font fonte) {
+  return pw.Container(
+    padding: const pw.EdgeInsets.all(6),
+    alignment: pw.Alignment.centerLeft,
+    child: pw.Text(texto, style: pw.TextStyle(font: fonte, fontWeight: pw.FontWeight.bold, fontSize: 11)),
+  );
+}
+
+
+
+
 
 
 /* POPUP
