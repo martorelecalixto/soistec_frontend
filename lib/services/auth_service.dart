@@ -48,7 +48,8 @@ class AuthService {
         },
         body: jsonEncode({'email': email, 'senha': senha}),
       );
-
+print(apiUrl);
+print(url);
       print('STATUS CODE: ${response.statusCode}');
       print('RESPONSE BODY: ${response.body}');
 

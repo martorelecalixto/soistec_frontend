@@ -178,6 +178,8 @@ void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
   }
 
 
+
+/*
 void _imprimirPDF() async {
   final pdf = pw.Document();
   final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -223,6 +225,53 @@ void _imprimirPDF() async {
 
   await Printing.layoutPdf(
     onLayout: (PdfPageFormat format) async => pdf.save(),
+  );
+}
+*/
+
+void _imprimirPDF() async {
+  final pdf = pw.Document();
+  final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
+
+  pdf.addPage(
+    pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      build: (pw.Context context) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              'Relatório de Vendas - $dataAtual',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              children: [
+                pw.Expanded(child: pw.Text('ID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                pw.Expanded(flex: 2, child: pw.Text('Entidade', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                pw.Expanded(child: pw.Text('Valor', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+              ],
+            ),
+            pw.Divider(),
+            ...vendabilheteFiltradas.map((item) {
+              return pw.Row(
+                children: [
+                  pw.Expanded(child: pw.Text('${item['id'] ?? ''}')),
+                  pw.Expanded(flex: 2, child: pw.Text('${item['entidade'] ?? ''}')),
+                  pw.Expanded(child: pw.Text('${_formatarMoeda(item['valortotal'] ?? 0)}')),
+                ],
+              );
+            }).toList(),
+          ],
+        );
+      },
+    ),
+  );
+
+  // Em vez de abrir nova aba, força o download
+  await Printing.sharePdf(
+    bytes: await pdf.save(),
+    filename: 'relatorio_vendas.pdf',
   );
 }
 
