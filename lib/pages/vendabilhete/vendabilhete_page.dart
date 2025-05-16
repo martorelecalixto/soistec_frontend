@@ -220,7 +220,7 @@ Future<void> _imprimirPDF(List<Map<String, dynamic>> vendabilheteFiltradas, Stri
 
             // Tabela com cabeçalho em fundo cinza
             pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.5),
+              border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
               columnWidths: {
                 0: pw.FlexColumnWidth(1),
                 1: pw.FlexColumnWidth(2),
@@ -231,7 +231,7 @@ Future<void> _imprimirPDF(List<Map<String, dynamic>> vendabilheteFiltradas, Stri
               children: [
                 // Cabeçalho da tabela
                 pw.TableRow(
-                  decoration: pw.BoxDecoration(color: PdfColors.grey300),
+                  decoration: pw.BoxDecoration(color: PdfColors.black),
                   children: [
                     _celulaCabecalho('ID', roboto),
                   //  _celulaCabecalho('Data', roboto),
@@ -254,7 +254,7 @@ Future<void> _imprimirPDF(List<Map<String, dynamic>> vendabilheteFiltradas, Stri
                 }).toList(),
                 // Total
                 pw.TableRow(
-                  decoration: pw.BoxDecoration(color: PdfColors.grey200),
+                  decoration: pw.BoxDecoration(color: PdfColors.black),
                   children: [
                     pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),
                     pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),

@@ -109,7 +109,7 @@ Widget _buildDrawer() {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       //const FlutterLogo(size: 40),
-                      Image.asset('../assets/logo.png', height: 40),
+                      Image.asset('assets/logo.png', height: 40),
                       const SizedBox(height: 8),
                       Text(
                         'Bem-vindo, $nome',
