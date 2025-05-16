@@ -92,11 +92,16 @@ class ItensVendaBilhete {
       valorfornecedor: (json['valorfornecedor'] as num?)?.toDouble(),
       valornet: (json['valornet'] as num?)?.toDouble(),
       localembarque: json['localembarque'] as String?,
-      dataembarque: json['dataembarque'] != null ? DateTime.parse(json['dataembarque']) : null,
-      horaembarque: json['horaembarque'] != null ? DateTime.parse(json['horaembarque']) : null,
+      dataembarque: json['dataembarque'] is String ? DateTime.parse(json['dataembarque']) : json['dataembarque'], 
+      horaembarque: json['horaembarque'] is String ? DateTime.parse(json['horaembarque']) : json['horaembarque'], 
+      //dataembarque: json['dataembarque'] != null ? DateTime.parse(json['dataembarque']) : null,
+      //horaembarque: json['horaembarque'] != null ? DateTime.parse(json['horaembarque']) : null,
       localdesembarque: json['localdesembarque'] as String?,
-      datadesembarque: json['datadesembarque'] != null ? DateTime.parse(json['datadesembarque']) : null,
-      horadesembarque: json['horadesembarque'] != null ? DateTime.parse(json['horadesembarque']) : null,
+      //datadesembarque: json['datadesembarque'] != null ? DateTime.parse(json['datadesembarque']) : null,
+      //horadesembarque: json['horadesembarque'] != null ? DateTime.parse(json['horadesembarque']) : null,
+      datadesembarque: json['datadesembarque'] is String ? DateTime.parse(json['datadesembarque']) : json['datadesembarque'], 
+      horadesembarque: json['horadesembarque'] is String ? DateTime.parse(json['horadesembarque']) : json['horadesembarque'], 
+
       chave: json['chave'] as String?,
     );
   }

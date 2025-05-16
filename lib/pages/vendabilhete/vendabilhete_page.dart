@@ -19,7 +19,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
-
+import 'dart:convert';
 
 String _formatarData(dynamic data) {
   try {
@@ -183,16 +183,26 @@ void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
   }
 
 
-
-
-Future<void> _imprimirPDF(List<Map<String, dynamic>> vendabilheteFiltradas, String Function(num) _formatarMoeda) async {
+//List<Map<String, dynamic>> vendabilheteFiltradas, String Function(num) _formatarMoeda
+/*
+Future<void> _imprimirPDF() async {
   final pdf = pw.Document();
   final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
   final fontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
   final roboto = pw.Font.ttf(fontData.buffer.asByteData());
 
-  final totalGeral = vendabilheteFiltradas.fold<num>(0, (soma, item) => soma + (item['valortotal'] ?? 0));
+   //print(jsonEncode(vendabilheteFiltradas));
+
+/*print(jsonEncode(vendabilheteFiltradas.map((item) => {
+  'id': item['id'],
+  'entidade': item['entidade'],
+  'pagamento': item['pagamento'],
+  'valortotal': item['valortotal'],
+}).toList()));   */
+
+
+  final totalGeral = 0;//vendabilheteFiltradas.fold<num>(0, (soma, item) => soma + (item['valortotal'] ?? 0));
 
   pdf.addPage(
     pw.Page(
@@ -222,8 +232,8 @@ Future<void> _imprimirPDF(List<Map<String, dynamic>> vendabilheteFiltradas, Stri
             pw.Table(
               border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
               columnWidths: {
-                0: pw.FlexColumnWidth(1),
-                1: pw.FlexColumnWidth(2),
+                1: pw.FlexColumnWidth(1),
+                //1: pw.FlexColumnWidth(2),
                 2: pw.FlexColumnWidth(2),
                 3: pw.FlexColumnWidth(2),
                 4: pw.FlexColumnWidth(1.5),
@@ -302,7 +312,7 @@ pw.Widget _celulaCabecalho(String texto, pw.Font fonte) {
   );
 }
 
-
+*/
 
 
 
@@ -358,7 +368,7 @@ void _imprimirPDF() async {
 */
 
 
-/* DOWNLOAD
+/* DOWNLOAD*/
 void _imprimirPDF() async {
   final pdf = pw.Document();
   final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -404,7 +414,7 @@ void _imprimirPDF() async {
     filename: 'relatorio_vendas.pdf',
   );
 }
-*/
+
 
 @override
 Widget build(BuildContext context) {
@@ -558,7 +568,7 @@ Widget build(BuildContext context) {
               const SizedBox(width: 8),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () => _imprimirPDF(vendabilheteFiltradas, _formatarMoeda),//_imprimirPDF,
+                onPressed: () => _imprimirPDF(), //_imprimirPDF(vendabilheteFiltradas, _formatarMoeda),
                 icon: const Icon(Icons.picture_as_pdf),
                 label: const Text('Imprimir PDF'),
               ),
