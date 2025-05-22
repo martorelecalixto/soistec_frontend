@@ -178,8 +178,8 @@ Widget _buildTabelaWeb(TextStyle? textStyle, double largura) {
         final isEven = index % 2 == 0;
 
         return DataRow(
-          color: MaterialStateProperty.resolveWith<Color?>(
-            (Set<MaterialState> states) {
+          color: WidgetStateProperty.resolveWith<Color?>(
+            (Set<WidgetState> states) {
               return isEven ? Colors.blueGrey[100] : Colors.white;
             },
           ),

@@ -43,7 +43,9 @@ String _formatarMoeda(dynamic valor) {
 }
 
 class VendaBilhetePage extends StatefulWidget {
-  const VendaBilhetePage({super.key});
+  const VendaBilhetePage({
+    super.key,
+    });
 
   @override
   _VendaBilhetePageState createState() => _VendaBilhetePageState();
@@ -66,6 +68,16 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
 
   bool isLoading = true;
 
+  final ScrollController _verticalController = ScrollController();
+  final ScrollController _horizontalController = ScrollController();
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -86,15 +98,28 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
       });    
   }
 
+
   Future<void> _carregarVendaBilhete({bool aplicarFiltros = false}) async {
     setState(() => isLoading = true);
+
     try {
+      // Verifica se todos os filtros estão vazios/nulos
+      final bool filtrosVazios = _filialSelecionada == null &&
+                                _clienteSelecionado == null &&
+                                _moedaSelecionada == null &&
+                                _dataInicial == null &&
+                                _dataFinal == null;
+
+      // Define datainicial padrão se necessário
+      final DateTime? dataInicialConsulta = filtrosVazios
+          ? DateTime.now().subtract(const Duration(days: 7))
+          : _dataInicial;
 
       final List<VendaBilhete> resultado = await VendaBilheteService.getVendaBilhetes(
         idfilial: _filialSelecionada,
         idcliente: _clienteSelecionado,
         idmoeda: _moedaSelecionada,
-        datainicial: _dataInicial,
+        datainicial: dataInicialConsulta,
         datafinal: _dataFinal,
       );
 
@@ -116,11 +141,11 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
         'idvendedor': f.idvendedor,
         'idemissor': f.idemissor,
         'idformapagamento': f.idformapagamento,
-        'idcentrocusto': f.idfilial, 
+        'idcentrocusto': f.idcentrocusto, 
         'idfatura': f.idfatura,
         'idreciboreceber': f.idreciboreceber,
         'idgrupo': f.idgrupo,
-
+        'idfilial': f.idfilial,
       }).toList();
 
       setState(() {
@@ -132,6 +157,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
       setState(() => isLoading = false);
     }
   }
+
 
   void _filtrarVendaBilhete(String valor) {
     final query = valor.toLowerCase();
@@ -145,24 +171,26 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
     setState(() => vendabilheteFiltradas = filtradas);
   }
 
-void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
-  final resultado = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => AlertDialog(
-      contentPadding: EdgeInsets.zero,
-      content: SizedBox(
-        width: 1200,
-        height: 800,
-        child: VendaBilheteForm(
-          vendabilhete: vendabilhete != null ? VendaBilhete.fromJson(vendabilhete) : null,
+
+  void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
+    final resultado = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        content: SizedBox(
+          width: 1200,
+          height: 800,
+          child: VendaBilheteForm(
+            vendabilhete: vendabilhete != null ? VendaBilhete.fromJson(vendabilhete) : null,
+          ),
         ),
       ),
-    ),
-  );
+    );
 
- if (resultado == true) _carregarVendaBilhete();
-}
+  if (resultado == true) _carregarVendaBilhete();
+  }
+
 
   void _confirmarExclusao(int idvenda) async {
     final confirmar = await showDialog<bool>(
@@ -177,540 +205,466 @@ void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
       ),
     );
     if (confirmar == true) {
-      await VendaBilheteService.deleteVendaBilhete(idvenda);
-      _carregarVendaBilhete();
+        try {
+          await VendaBilheteService.deleteVendaBilhete(idvenda);
+          mostrarMensagem(context, 'Venda excluída com sucesso!', titulo: 'Sucesso');
+          _carregarVendaBilhete();
+        } catch (e) {
+          if (e is ApiException) {
+            mostrarMensagem(context, e.message, titulo: 'Erro');
+          } else {
+            mostrarMensagem(context, 'Erro inesperado: $e', titulo: 'Erro');
+          }
+        }
+
+      //await VendaBilheteService.deleteVendaBilhete(idvenda);
+      //_carregarVendaBilhete();
     }
   }
 
 
-//List<Map<String, dynamic>> vendabilheteFiltradas, String Function(num) _formatarMoeda
-/*
-Future<void> _imprimirPDF() async {
-  final pdf = pw.Document();
-  final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
+  /* DOWNLOAD*/
+  void _imprimirPDF() async {
+    final pdf = pw.Document();
+    final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    final font = pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Regular.ttf'));
+    final fontBold = pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Bold.ttf'));
 
-  final fontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-  final roboto = pw.Font.ttf(fontData.buffer.asByteData());
-
-   //print(jsonEncode(vendabilheteFiltradas));
-
-/*print(jsonEncode(vendabilheteFiltradas.map((item) => {
-  'id': item['id'],
-  'entidade': item['entidade'],
-  'pagamento': item['pagamento'],
-  'valortotal': item['valortotal'],
-}).toList()));   */
-
-
-  final totalGeral = 0;//vendabilheteFiltradas.fold<num>(0, (soma, item) => soma + (item['valortotal'] ?? 0));
-
-  pdf.addPage(
-    pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.all(24),
-      build: (pw.Context context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            // Cabeçalho
-            pw.Center(
-              child: pw.Text(
-                'Relatório de Vendas',
-                style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, font: roboto),
-              ),
-            ),
-            pw.SizedBox(height: 5),
-            pw.Center(
-              child: pw.Text(
-                'Data de emissão: $dataAtual',
-                style: pw.TextStyle(fontSize: 12, font: roboto),
-              ),
-            ),
-            pw.SizedBox(height: 20),
-
-            // Tabela com cabeçalho em fundo cinza
-            pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
-              columnWidths: {
-                1: pw.FlexColumnWidth(1),
-                //1: pw.FlexColumnWidth(2),
-                2: pw.FlexColumnWidth(2),
-                3: pw.FlexColumnWidth(2),
-                4: pw.FlexColumnWidth(1.5),
-              },
-              children: [
-                // Cabeçalho da tabela
-                pw.TableRow(
-                  decoration: pw.BoxDecoration(color: PdfColors.black),
-                  children: [
-                    _celulaCabecalho('ID', roboto),
-                  //  _celulaCabecalho('Data', roboto),
-                    _celulaCabecalho('Entidade', roboto),
-                    _celulaCabecalho('Pagamento', roboto),
-                    _celulaCabecalho('Valor', roboto),
-                  ],
-                ),
-                // Linhas de dados
-                ...vendabilheteFiltradas.map((item) {
-                  return pw.TableRow(
-                    children: [
-                      _celula('${item['id'] ?? ''}', roboto),
-                   //   _celula('${item['datavenda'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item['datavenda'])) : ''}', roboto),
-                      _celula('${item['entidade'] ?? ''}', roboto),
-                      _celula('${item['pagamento'] ?? ''}', roboto),
-                      _celula(_formatarMoeda(item['valortotal'] ?? 0), roboto, alignRight: true),
-                    ],
-                  );
-                }).toList(),
-                // Total
-                pw.TableRow(
-                  decoration: pw.BoxDecoration(color: PdfColors.black),
-                  children: [
-                    pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),
-                    pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),
-                    pw.Container(
-                      padding: pw.EdgeInsets.all(8),
-                      alignment: pw.Alignment.centerRight,
-                      child: pw.Text('TOTAL:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto)),
-                    ),
-                    pw.Container(padding: pw.EdgeInsets.all(8), child: pw.Text('', style: pw.TextStyle(font: roboto))),
-                    pw.Container(
-                      padding: pw.EdgeInsets.all(8),
-                      alignment: pw.Alignment.centerRight,
-                      child: pw.Text(_formatarMoeda(totalGeral), style: pw.TextStyle(fontWeight: pw.FontWeight.bold, font: roboto)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    ),
-  );
-
-  await Printing.sharePdf(
-    bytes: await pdf.save(),
-    filename: 'relatorio_vendas.pdf',
-  );
-}
-
-// Funções auxiliares para células
-pw.Widget _celula(String texto, pw.Font fonte, {bool alignRight = false}) {
-  return pw.Container(
-    padding: const pw.EdgeInsets.all(6),
-    alignment: alignRight ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
-    child: pw.Text(texto, style: pw.TextStyle(font: fonte, fontSize: 10)),
-  );
-}
-
-pw.Widget _celulaCabecalho(String texto, pw.Font fonte) {
-  return pw.Container(
-    padding: const pw.EdgeInsets.all(6),
-    alignment: pw.Alignment.centerLeft,
-    child: pw.Text(texto, style: pw.TextStyle(font: fonte, fontWeight: pw.FontWeight.bold, fontSize: 11)),
-  );
-}
-
-*/
-
-
-
-
-/* POPUP
-void _imprimirPDF() async {
-  final pdf = pw.Document();
-  final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
-
-  pdf.addPage(
-    pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      build: (pw.Context context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              'Relatório de Vendas - $dataAtual',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 20),
-
-            // Cabeçalho
-            pw.Row(
-              children: [
-                pw.Expanded(child: pw.Text('ID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
-                pw.Expanded(flex: 2, child: pw.Text('Entidade', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
-                pw.Expanded(child: pw.Text('Valor', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
-              ],
-            ),
-            pw.Divider(),
-
-            // Dados
-            ...vendabilheteFiltradas.map((item) {
-              return pw.Row(
-                children: [
-                  pw.Expanded(child: pw.Text('${item['id'] ?? ''}')),
-                  pw.Expanded(flex: 2, child: pw.Text('${item['entidade'] ?? ''}')),
-                  pw.Expanded(child: pw.Text('${_formatarMoeda(item['valortotal'] ?? 0)}')),
-                ],
-              );
-            }).toList(),
-          ],
-        );
-      },
-    ),
-  );
-
-  await Printing.layoutPdf(
-    onLayout: (PdfPageFormat format) async => pdf.save(),
-  );
-}
-*/
-
-
-/* DOWNLOAD*/
-void _imprimirPDF() async {
-  final pdf = pw.Document();
-  final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
-
-  pdf.addPage(
-    pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      build: (pw.Context context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              'Relatório de Vendas - $dataAtual',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 20),
-            pw.Row(
-              children: [
-                pw.Expanded(child: pw.Text('ID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
-                pw.Expanded(flex: 2, child: pw.Text('Entidade', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
-                pw.Expanded(child: pw.Text('Valor', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
-              ],
-            ),
-            pw.Divider(),
-            ...vendabilheteFiltradas.map((item) {
-              return pw.Row(
-                children: [
-                  pw.Expanded(child: pw.Text('${item['id'] ?? ''}')),
-                  pw.Expanded(flex: 2, child: pw.Text('${item['entidade'] ?? ''}')),
-                  pw.Expanded(child: pw.Text('${_formatarMoeda(item['valortotal'] ?? 0)}')),
-                ],
-              );
-            }).toList(),
-          ],
-        );
-      },
-    ),
-  );
-
-  // Em vez de abrir nova aba, força o download
-  await Printing.sharePdf(
-    bytes: await pdf.save(),
-    filename: 'relatorio_vendas.pdf',
-  );
-}
-
-
-@override
-Widget build(BuildContext context) {
-  final largura = MediaQuery.of(context).size.width;
-
-  return BaseLayout(
-    titulo: 'VendaBilhete',
-    conteudo: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            alignment: WrapAlignment.start,
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // Filial
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              pw.Text(
+                'Relatório de Venda Bilhete - $dataAtual',
+                style: pw.TextStyle(font: fontBold),//pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Row(
                 children: [
-                  DropdownButton<String>(
-                    value: _filialSelecionada,
-                    hint: const Text('Filial'),
-                    onChanged: (value) => setState(() => _filialSelecionada = value),
-                    items: filiais.map((e) =>
-                      DropdownMenuItem(value: e['id'].toString(), child: Text(e['nome']))).toList(),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: 'Limpar Filial',
-                    onPressed: () => setState(() => _filialSelecionada = null),
-                  ),
+                  //pw.Expanded(child: pw.Text('Nro', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                  //pw.Expanded(child: pw.Text('Dt.Venda', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                 // pw.Expanded(flex: 2, child: pw.Text('Cliente', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                 // pw.Expanded(child: pw.Text('Valor', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                  pw.Expanded(child: pw.Text('Nro', style: pw.TextStyle(font: fontBold))),
+                  pw.Expanded(child: pw.Text('Dt.Venda', style: pw.TextStyle(font: fontBold))),
+                  pw.Expanded(flex: 2, child: pw.Text('Cliente', style: pw.TextStyle(font: fontBold))),
+                  pw.Expanded(child: pw.Text('Valor', style: pw.TextStyle(font: fontBold))),
                 ],
               ),
-
-              // Cliente
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButton<String>(
-                    value: _clienteSelecionado,
-                    hint: const Text('Cliente'),
-                    onChanged: (value) => setState(() => _clienteSelecionado = value),
-                    items: clientes.map((e) =>
-                      DropdownMenuItem(value: e['id'].toString(), child: Text(e['nome']))).toList(),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: 'Limpar Cliente',
-                    onPressed: () => setState(() => _clienteSelecionado = null),
-                  ),
-                ],
-              ),
-
-              // Moeda
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButton<String>(
-                    value: _moedaSelecionada,
-                    hint: const Text('Moeda'),
-                    onChanged: (value) => setState(() => _moedaSelecionada = value),
-                    items: moedas.map((e) =>
-                      DropdownMenuItem(value: e['id'].toString(), child: Text(e['nome']))).toList(),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: 'Limpar Moeda',
-                    onPressed: () => setState(() => _moedaSelecionada = null),
-                  ),
-                ],
-              ),
-
-              // Data Inicial
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  OutlinedButton(
-                    onPressed: () async {
-                      final data = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (data != null) setState(() => _dataInicial = data);
-                    },
-                    child: Text(
-                      _dataInicial != null
-                          ? 'Início: ${DateFormat('dd/MM/yyyy').format(_dataInicial!)}'
-                          : 'Data Inicial',
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: 'Limpar Data Inicial',
-                    onPressed: () => setState(() => _dataInicial = null),
-                  ),
-                ],
-              ),
-
-              // Data Final
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  OutlinedButton(
-                    onPressed: () async {
-                      final data = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (data != null) setState(() => _dataFinal = data);
-                    },
-                    child: Text(
-                      _dataFinal != null
-                          ? 'Final: ${DateFormat('dd/MM/yyyy').format(_dataFinal!)}'
-                          : 'Data Final',
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: 'Limpar Data Final',
-                    onPressed: () => setState(() => _dataFinal = null),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    labelText: 'Buscar por cliente, nº ou data venda',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                  onChanged: _filtrarVendaBilhete,
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                onPressed: _carregarVendaBilhete,
-                icon: const Icon(Icons.search),
-                label: const Text('Consultar'),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () => _imprimirPDF(), //_imprimirPDF(vendabilheteFiltradas, _formatarMoeda),
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Imprimir PDF'),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                onPressed: () => _abrirFormulario(),
-                icon: const Icon(Icons.add),
-                label: const Text('Nova Venda'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : largura > 600
-                    ? _buildTabelaWeb(Theme.of(context).textTheme.bodyLarge, largura)
-                    : _buildListaMobile(Theme.of(context).textTheme.bodyLarge),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-
-Widget _buildTabelaWeb(TextStyle? textStyle, double largura) {
-  if (vendabilheteFiltradas.isEmpty) {
-    return const Center(child: Text('Nenhuma venda encontrada.'));
-  }
-
-  return SingleChildScrollView(
-    scrollDirection: Axis.vertical,
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: [
-          DataColumn(label: Text('Ações', style: TextStyle(fontSize: 12))),
-          DataColumn(label: Text('Nro', style: TextStyle(fontSize: 12))),
-          if (largura > 800) DataColumn(label: const Text('Dt.Venda', style: TextStyle(fontSize: 12))),
-          if (largura > 900) DataColumn(label: const Text('Cliente', style: TextStyle(fontSize: 12))),
-          if (largura > 1000) DataColumn(label: const Text('Pagamento', style: TextStyle(fontSize: 12))),
-          if (largura > 1100) DataColumn(label: const Text('Valor Total', style: TextStyle(fontSize: 12))),
-        // if (largura > 1200) DataColumn(label: const Text('Telefone 1', style: TextStyle(fontSize: 12))),
-        // if (largura > 1300) DataColumn(label: const Text('Telefone 2', style: TextStyle(fontSize: 12))),
-        ],
-        rows: vendabilheteFiltradas.asMap().entries.map((entry) {
-          final index = entry.key;
-          final vendabilhete = entry.value;
-          final isEven = index % 2 == 0;
-
-          return DataRow(
-            color: MaterialStateProperty.resolveWith<Color?>(
-              (Set<MaterialState> states) =>
-                  isEven ? Colors.blueGrey[100] : Colors.white,
-            ),
-            cells: [
-              DataCell(Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.orange),
-                    onPressed: () => _abrirFormulario(vendabilhete: vendabilhete),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _confirmarExclusao(vendabilhete['id']),
-                  ),
-                ],
-              )),
-              DataCell(Text(vendabilhete['id'].toString().padLeft(5, '0'), style: const TextStyle(fontSize: 12))),
-              if (largura > 800) DataCell(Text( _formatarData(vendabilhete['datavenda'].toString()), style: const TextStyle(fontSize: 12))),
-              if (largura > 900) DataCell(Text(vendabilhete['entidade'].toString(), style: const TextStyle(fontSize: 12))),
-              if (largura > 1000) DataCell(Text(vendabilhete['pagamento'].toString(), style: const TextStyle(fontSize: 12))),
-              if (largura > 1100) DataCell(Align( alignment: Alignment.centerRight,child: Text(_formatarMoeda(vendabilhete['valortotal']), style: const TextStyle(fontSize: 12)))),
-            // if (largura > 1200) DataCell(Text(vendabilhete['datavencimento']  ?? '', style: const TextStyle(fontSize: 12))),
-            // if (largura > 1300) DataCell(Text(vendabilhete['datavencimento']  ?? '', style: const TextStyle(fontSize: 12))),
+              pw.Divider(),
+              ...vendabilheteFiltradas.map((item) {
+                return pw.Row(
+                  children: [
+                    pw.Expanded(child: pw.Text(item['id'].toString().padLeft(5, '0') ?? '')),
+                    pw.Expanded(child: pw.Text(_formatarData(item['datavenda'] ?? ''))),
+                    pw.Expanded(flex: 2, child: pw.Text('${item['entidade'] ?? ''}')),
+                    pw.Expanded(child: pw.Text(_formatarMoeda(item['valortotal'] ?? 0))),
+                  ],
+                );
+              }),
             ],
           );
-        }).toList(),
+        },
       ),
-    ),
-  );
+    );
 
-
-}
-
-
-Widget _buildListaMobile(TextStyle? textStyle) {
-  if (vendabilheteFiltradas.isEmpty) {
-    return const Center(child: Text('Nenhuma venda encontrada.'));
+    // Em vez de abrir nova aba, força o download
+    await Printing.sharePdf(
+      bytes: await pdf.save(),
+      filename: 'relatorio_venda_bilhete.pdf',
+    );
   }
 
-  return ListView.builder(
-    itemCount: vendabilheteFiltradas.length,
-    itemBuilder: (_, index) {
-      final vendabilhete = vendabilheteFiltradas[index];
-      final isEven = index % 2 == 0;
-      final backgroundColor = isEven ? Colors.blueGrey[100] : Colors.white;
 
-      return Card(
-        color: backgroundColor,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Coluna de botões (à esquerda)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.orange),
-                    onPressed: () => _abrirFormulario(vendabilhete: vendabilhete),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _confirmarExclusao(vendabilhete['idvenda']),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              // Dados (à direita)
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [ // Text('datavenda: ${vendabilhete['datavenda']}'
-                    Text(vendabilhete['id'].toString().padLeft(5, '0'), style: const TextStyle(fontSize: 12)),
-                    Text(vendabilhete['entidade'].toString(), style: const TextStyle(fontSize: 12)),
-                    //if ((filial['celular1'] ?? '').isNotEmpty)
-                    //  Text('Celular: ${filial['celular1']}', style: const TextStyle(fontSize: 12)),
+  @override
+  Widget build(BuildContext context) {
+    final largura = MediaQuery.of(context).size.width;
+
+    return BaseLayout(
+      titulo: 'VendaBilhete',
+      conteudo: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              alignment: WrapAlignment.start,
+              children: [
+                // Filial
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButton<String>(
+                      value: _filialSelecionada,
+                      hint: const Text('Filial'),
+                      onChanged: (value) => setState(() => _filialSelecionada = value),
+                      items: filiais.map((e) =>
+                        DropdownMenuItem(value: e['id'].toString(), child: Text(e['nome']))).toList(),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Limpar Filial',
+                      onPressed: () => setState(() => _filialSelecionada = null),
+                    ),
                   ],
                 ),
+
+                // Cliente
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButton<String>(
+                      value: _clienteSelecionado,
+                      hint: const Text('Cliente'),
+                      onChanged: (value) => setState(() => _clienteSelecionado = value),
+                      items: clientes.map((e) =>
+                        DropdownMenuItem(value: e['id'].toString(), child: Text(e['nome']))).toList(),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Limpar Cliente',
+                      onPressed: () => setState(() => _clienteSelecionado = null),
+                    ),
+                  ],
+                ),
+
+                // Moeda
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButton<String>(
+                      value: _moedaSelecionada,
+                      hint: const Text('Moeda'),
+                      onChanged: (value) => setState(() => _moedaSelecionada = value),
+                      items: moedas.map((e) =>
+                        DropdownMenuItem(value: e['id'].toString(), child: Text(e['nome']))).toList(),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Limpar Moeda',
+                      onPressed: () => setState(() => _moedaSelecionada = null),
+                    ),
+                  ],
+                ),
+
+                // Data Inicial
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () async {
+                        final data = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (data != null) setState(() => _dataInicial = data);
+                      },
+                      child: Text(
+                        _dataInicial != null
+                            ? 'Início: ${DateFormat('dd/MM/yyyy').format(_dataInicial!)}'
+                            : 'Data Inicial',
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Limpar Data Inicial',
+                      onPressed: () => setState(() => _dataInicial = null),
+                    ),
+                  ],
+                ),
+
+                // Data Final
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () async {
+                        final data = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (data != null) setState(() => _dataFinal = data);
+                      },
+                      child: Text(
+                        _dataFinal != null
+                            ? 'Final: ${DateFormat('dd/MM/yyyy').format(_dataFinal!)}'
+                            : 'Data Final',
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Limpar Data Final',
+                      onPressed: () => setState(() => _dataFinal = null),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      labelText: 'Buscar por cliente, nº ou data venda',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: _filtrarVendaBilhete,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  onPressed: _carregarVendaBilhete,
+                  icon: const Icon(Icons.search),
+                  label: const Text('Consultar'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: () => _imprimirPDF(), //_imprimirPDF(vendabilheteFiltradas, _formatarMoeda),
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Imprimir PDF'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  onPressed: () => _abrirFormulario(),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nova Venda'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16,),
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : largura > 600
+                      ? _buildTabelaWeb(Theme.of(context).textTheme.bodyLarge, largura, 1200, 600)
+                      : _buildListaMobile(Theme.of(context).textTheme.bodyLarge),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+
+  Widget _buildTabelaWeb(TextStyle? textStyle, double largura, double width, double height) {
+    if (vendabilheteFiltradas.isEmpty) {
+      return const Center(child: Text('Nenhuma venda encontrada.'));
+    }
+
+    return Center(
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Scrollbar(
+          controller: _verticalController,
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            controller: _verticalController,
+            scrollDirection: Axis.vertical,
+            child: Scrollbar(
+              controller: _horizontalController,
+              thumbVisibility: true,
+              notificationPredicate: (notification) => notification.depth == 1,
+              child: SingleChildScrollView(
+                controller: _horizontalController,
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: width),
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(Colors.blueGrey[200]),
+                    headingRowHeight: 40,
+                    dataRowHeight: 40,
+                    columnSpacing: 20,
+                    columns: [
+                      _buildColumn('Ações', 100),
+                      _buildColumn('Nro', 40),
+                      if (largura > 800) _buildColumn('Dt.Venda', 100),
+                      if (largura > 900) _buildColumn('Cliente', 200),
+                      if (largura > 1000) _buildColumn('Pagamento', 150),
+                      if (largura > 1100) _buildColumn('Valor Total', 120),
+                    ],
+                    rows: vendabilheteFiltradas.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final vendabilhete = entry.value;
+                      final isEven = index % 2 == 0;
+
+                      return DataRow(
+                        color: WidgetStateProperty.resolveWith<Color?>(
+                          (Set<WidgetState> states) =>
+                              isEven ? Colors.grey.shade200 : Colors.white,
+                        ),
+                        cells: [
+                          DataCell(Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.orange),
+                                onPressed: () => _abrirFormulario(vendabilhete: vendabilhete),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _confirmarExclusao(vendabilhete['id']),
+                              ),
+                            ],
+                          )),
+                          DataCell(SizedBox(
+                            width: 80,
+                            child: Text(
+                              vendabilhete['id'].toString().padLeft(5, '0'),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          )),
+                          if (largura > 800)
+                            DataCell(SizedBox(
+                              width: 100,
+                              child: Text(
+                                _formatarData(vendabilhete['datavenda'].toString()),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            )),
+                          if (largura > 900)
+                            DataCell(SizedBox(
+                              width: 200,
+                              child: Text(
+                                vendabilhete['entidade'].toString(),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            )),
+                          if (largura > 1000)
+                            DataCell(SizedBox(
+                              width: 150,
+                              child: Text(
+                                vendabilhete['pagamento'].toString(),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            )),
+                          if (largura > 1100)
+                            DataCell(SizedBox(
+                              width: 120,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  _formatarMoeda(vendabilhete['valortotal']),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            )),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
         ),
-      );
-    },
-  );
-}
+      ),
+    );
+  }
+
+
+  DataColumn _buildColumn(String label, double width) {
+    return DataColumn(
+      label: SizedBox(
+        width: width,
+        child: Text(
+          label,
+          //style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
+    );
+  } 
+
+  Widget _buildListaMobile(TextStyle? textStyle) {
+    if (vendabilheteFiltradas.isEmpty) {
+      return const Center(child: Text('Nenhuma venda encontrada.'));
+    }
+
+    return ListView.builder(
+      itemCount: vendabilheteFiltradas.length,
+      itemBuilder: (_, index) {
+        final vendabilhete = vendabilheteFiltradas[index];
+        final isEven = index % 2 == 0;
+        final backgroundColor = isEven ? Colors.blueGrey[100] : Colors.white;
+
+        return Card(
+          color: backgroundColor,
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Coluna de botões (à esquerda)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.orange),
+                      onPressed: () => _abrirFormulario(vendabilhete: vendabilhete),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _confirmarExclusao(vendabilhete['idvenda']),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                // Dados (à direita)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [ // Text('datavenda: ${vendabilhete['datavenda']}'
+                      Text(vendabilhete['id'].toString().padLeft(5, '0'), style: const TextStyle(fontSize: 12)),
+                      Text(vendabilhete['entidade'].toString(), style: const TextStyle(fontSize: 12)),
+                      //if ((filial['celular1'] ?? '').isNotEmpty)
+                      //  Text('Celular: ${filial['celular1']}', style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+  void mostrarMensagem(BuildContext context, String mensagem, {String titulo = 'Atenção'}) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(titulo),
+          content: Text(mensagem),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 
 }

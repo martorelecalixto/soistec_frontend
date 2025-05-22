@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 import '../models/atividade_model.dart';
 import '../services/atividade_service.dart';

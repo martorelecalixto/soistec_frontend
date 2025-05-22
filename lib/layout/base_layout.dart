@@ -12,8 +12,7 @@ class BaseLayout extends StatefulWidget {
   final String titulo;
   final Widget conteudo;
 
-  const BaseLayout({Key? key, required this.titulo, required this.conteudo})
-      : super(key: key);
+  const BaseLayout({super.key, required this.titulo, required this.conteudo});
 
   @override
   State<BaseLayout> createState() => _BaseLayoutState();

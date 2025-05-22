@@ -1,8 +1,6 @@
 
-  import 'package:intl/intl.dart';
   import 'dart:convert';
   import 'package:http/http.dart' as http;
-  import '../models/vendabilhete_model.dart';
   import '../models/itensvendabilhete_model.dart';
   import 'package:shared_preferences/shared_preferences.dart';
   import '../config.dart'; // importa o arquivo de configuração
@@ -81,20 +79,24 @@
     }
 
 
-    static Future<List<ItensVendaBilhete>> getItensVendaBilheteByIdVenda({required int idvenda}) async {
-      final uri = Uri.parse('$Url/porvenda/$idvenda'); // <- envia como parte da URL
-      print(uri);
-      final response = await http.get(uri);
+  static Future<List<ItensVendaBilhete>> getItensVendaBilheteByIdVenda({required int idvenda}) async {
+    final uri = Uri.parse('$Url/porvenda/$idvenda');
+    final response = await http.get(uri);
 
-      if (response.statusCode == 200) {
-        final List jsonData = json.decode(response.body);
-       // print('$jsonData');
-        print('entrou service.getItensVendaBilheteByIdVenda');
-        return jsonData.map((e) => ItensVendaBilhete.fromJson(e)).toList();
-      } else {
-        throw Exception('Erro ao carregar itens vendas');
+    if (response.statusCode == 200) {
+      final List jsonData = json.decode(response.body);
+
+      if (jsonData.isEmpty) {
+        return []; // Retorna lista vazia se não houver dados
       }
+
+      return jsonData.map((e) => ItensVendaBilhete.fromJson(e)).toList();
+    } else {
+      return []; // Também retorna lista vazia em caso de erro
+      // Ou use: throw Exception('Erro ao carregar itens vendas');
     }
+  }
+
 
   }
 

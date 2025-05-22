@@ -5,7 +5,7 @@ import '../config.dart'; // importa o arquivo de configuração
 
 class AuthService {
   // lib/service/meuService.js
-  static const String apiUrl ='${AppConfig.baseUrl}';
+  static const String apiUrl =AppConfig.baseUrl;
   //static const String Url = '${AppConfig.baseUrl}/api/vendasbilhete';
 
   //static const String apiUrl = 'https://soistec-api.onrender.com';
@@ -48,10 +48,10 @@ class AuthService {
         },
         body: jsonEncode({'email': email, 'senha': senha}),
       );
-print(apiUrl);
-print(url);
-      print('STATUS CODE: ${response.statusCode}');
-      print('RESPONSE BODY: ${response.body}');
+      //print(apiUrl);
+      //print(url);
+      //print('STATUS CODE: ${response.statusCode}');
+      //print('RESPONSE BODY: ${response.body}');
 
       Map<String, dynamic> body;
 
@@ -70,6 +70,7 @@ print(url);
           'nome': body['nome'],
           'email': body['email'],
           'empresa': body['empresa'],
+          'idempresa': body['idempresa'],
         };
         final token = body['fctoken'];
         //final empresa = body['empresa'];
@@ -79,6 +80,7 @@ print(url);
         await prefs.setString('email', usuario['email'] ?? '');
         await prefs.setString('fctoken', token ?? '');
         await prefs.setString('empresa', usuario['empresa'] ?? '');
+        await prefs.setInt('idempresa', usuario['idempresa'] ?? 0);
 
         return {
           'success': true,
@@ -103,13 +105,14 @@ print(url);
     await prefs.clear();
   }
 
-  static Future<Map<String, String?>> getUserData() async {
+  static Future<Map<String, dynamic>> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     return {
       'nome': prefs.getString('nome'),
       'email': prefs.getString('email'),
       'fctoken': prefs.getString('fctoken'),
       'empresa': prefs.getString('empresa'),
+      'idempresa': prefs.getInt('idempresa'),
     };
   }
 }

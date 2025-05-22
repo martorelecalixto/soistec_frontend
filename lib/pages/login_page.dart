@@ -12,6 +12,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController senhaController = TextEditingController();
+  bool _senhaVisivel = false;
 
   String mensagemErro = '';
   bool carregando = false;
@@ -95,10 +96,20 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: 16),
                               TextField(
                                 controller: senhaController,
-                                obscureText: true,
-                                decoration: const InputDecoration(
+                                obscureText: !_senhaVisivel,
+                                decoration: InputDecoration(
                                   labelText: 'Senha',
-                                  prefixIcon: Icon(Icons.lock),
+                                  prefixIcon: const Icon(Icons.lock),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _senhaVisivel ? Icons.visibility : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _senhaVisivel = !_senhaVisivel;
+                                      });
+                                    },
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 8),
