@@ -33,6 +33,40 @@ import 'package:uuid/uuid.dart';
 
 import 'package:sistrade/widgets/itemvendabilhete_form.dart';
 
+String _formatarData(dynamic data) {
+  try {
+    if (data == null || data.toString().isEmpty) return '';
+    final date = DateTime.tryParse(data.toString());
+    if (date == null) return data.toString();
+    return DateFormat('dd/MM/yyyy').format(date);
+  } catch (e) {
+    return data.toString();
+  }
+}
+
+String _formatarMoeda(dynamic valor) {
+  if (valor == null) return '';
+  try {
+    final numero = double.tryParse(valor.toString()) ?? 0.0;
+    return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(numero);
+  } catch (e) {
+    return '';
+  }
+}
+
+String formatarDataPorExtenso(DateTime data) {
+  const List<String> meses = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+  ];
+
+  String dia = data.day.toString().padLeft(2, '0');
+  String mes = meses[data.month - 1];
+  String ano = data.year.toString();
+
+  return '$dia de $mes de $ano';
+}
+
 class VendaBilheteForm extends StatefulWidget {
   final VendaBilhete? vendabilhete;
   final double? width;
@@ -51,6 +85,8 @@ class VendaBilheteForm extends StatefulWidget {
 
 class _VendaBilheteFormState extends State<VendaBilheteForm> {
   final _formKey = GlobalKey<FormState>();
+
+  late VendaBilhete vendaBilheteAtual;
 
   final nroController = TextEditingController();
   final solicitanteController = TextEditingController();
@@ -96,8 +132,11 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   @override
   void initState() {
     super.initState();
+    // Inicializa o objeto com o que vier do widget ou cria um novo
+    vendaBilheteAtual = widget.vendabilhete ?? VendaBilhete();    
     _init();
   }
+
 
   void _init() async {
     setState(() => _isLoading = true);
@@ -106,11 +145,30 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
     setState(() => _isLoading = false);
   }  
 
+  
+  void atualizarVendaBilhete(VendaBilhete novo) {
+    setState(() {
+      vendaBilheteAtual = novo;
+    });
+  }
+
+  // Se quiser que o estado reaja caso o widget pai mude o objeto
+  @override
+  void didUpdateWidget(covariant VendaBilheteForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.vendabilhete != oldWidget.vendabilhete) {
+      setState(() {
+        vendaBilheteAtual = widget.vendabilhete ?? VendaBilhete();
+      });
+    }
+  }
+
 
   Future<void> _carregarDadosIniciais() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    if (widget.vendabilhete != null) {
-      final v = widget.vendabilhete!;
+
+    if (vendaBilheteAtual != null) {
+      final v = vendaBilheteAtual!;
 
       nroController.text = v.id?.toString() ?? '';
       solicitanteController.text = v.solicitante ?? '';
@@ -135,8 +193,10 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
       selectedEmissor = v.idemissor?.toString();
       selectedPagamento = v.idformapagamento?.toString();
       selectedGrupo = v.idgrupo?.toString();
+
       // Carrega os itens da venda
       _itensVendaBilhete = await ItemVendaBilheteService.getItensVendaBilheteByIdVenda(idvenda: v.idvenda!);
+
       setState(() {}); // Garante que os dados sejam renderizados
     }
   }
@@ -166,25 +226,30 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  void _abrirFormulario({Map<String, dynamic>? itemvendabilhete}) async {
+  void _abrirFormularioAddBilhete({Map<String, dynamic>? itemvendabilhete,}) async {
     final resultado = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         contentPadding: EdgeInsets.zero,
         content: SizedBox(
-          width: 900,
-          height: 350,
+          width: 1000,//1200
+          height: 500,
           child: ItemVendaBilheteForm(
+            idVenda: int.tryParse(widget.vendabilhete!.idvenda.toString()) ?? 0,
             itemvendabilhete: itemvendabilhete != null ? ItensVendaBilhete.fromJson(itemvendabilhete) : null,
           ),
         ),
       ),
     );
+
+    // Atualizar Listview
+     _reabrirFormularioRequisicao(vendabilhete: widget.vendabilhete?.toJson());
+
   }
 
 
-  void limparCampos() {
+  void limparCampos() async {
     nroController.clear();
     solicitanteController.clear();
     observacaoController.clear();
@@ -196,6 +261,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
     selectedFilial = selectedCliente = selectedCCusto = selectedVendedor =
     selectedEmissor = selectedMoeda = selectedPagamento = selectedGrupo = null;
     dataVenda = dataVencimento = null;
+    _itensVendaBilhete = await ItemVendaBilheteService.getItensVendaBilheteByIdVenda(idvenda: 0);
     setState(() {});
   }
 
@@ -205,7 +271,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  void _abrirFormularioNovo({Map<String, dynamic>? vendabilhete}) async {
+  void _reabrirFormularioRequisicao({Map<String, dynamic>? vendabilhete}) async {
     final resultado = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -226,25 +292,45 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
 
   void onNovo() {
 
-    setState(() {
-      //habilitaSalvarCancelar = true;
-      Navigator.pop(context, true);
-      _abrirFormularioNovo();
-      idReq = 0;
-    });
-  }
+    limparCampos();
 
+    idReq = 0;
 
-  void onEditar() {
-    setState(() {
-      habilitaSalvarCancelar = true;
-    });
+    var vendaBilheteAux = VendaBilhete(
+          idvenda: null,
+          id: null,
+          datavenda: null,
+          datavencimento: null,
+          documento: '', // ou algum campo se houver
+          valortotal: 0,
+          descontototal: 0,
+          valorentrada: 0,
+          observacao: '',
+          solicitante: '',
+          identidade: null,
+          idvendedor: null,
+          idemissor: null,
+          idmoeda: null,
+          idformapagamento: null,
+          idfilial: null,
+          idfatura: null,
+          idreciboreceber: null,
+          chave: '',
+          excluido: false,
+          empresa: '',
+          idcentrocusto: null,
+          idgrupo: null,
+        );
+
+        atualizarVendaBilhete(vendaBilheteAux);
+
+       // Navigator.popUntil(context, (route) => route.isFirst);
+       // Navigator.pop(context, true); // Fecha o formulário atual
   }
 
 
   void onSalvar() async{
     if (!_formKey.currentState!.validate()) {
-      //print('Campos obrigatórios não preenchidos.');
       return; // Sai da função e não executa mais nada.
     }else{
         try{
@@ -256,11 +342,11 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
 
           //BuscarId//
           if (idempresa != null) {
-            if ((widget.vendabilhete == null)||(widget.vendabilhete?.idvenda == 0)) {
+            if ((vendaBilheteAtual?.idvenda == null)|| (vendaBilheteAtual?.idvenda == 0)) {
               idReq = await IncVendaBilheteService.incVendaBilhete(idempresa);
               nroController.text = idReq.toString();
             }else{ 
-                idReq = widget.vendabilhete?.id ?? 0;
+                idReq = vendaBilheteAtual?.id ?? 0;
                 nroController.text = idReq.toString();        
               }
 
@@ -274,7 +360,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
 
           if (_formKey.currentState!.validate()) {
             final vendabilhete = VendaBilhete(
-              idvenda: widget.vendabilhete?.idvenda ?? 0,
+              idvenda: vendaBilheteAtual?.idvenda ?? 0,
               id: idReq,
               datavenda: dataVenda,
               datavencimento: dataVencimento,
@@ -298,16 +384,80 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
               idcentrocusto: selectedCCusto != null ? int.tryParse(selectedCCusto!) : null,
               idgrupo: selectedGrupo != null ? int.tryParse(selectedGrupo!) : null,
             );
-            
-            bool sucesso;
-            if (widget.vendabilhete == null) {
-              sucesso = await VendaBilheteService.createVendaBilhete(vendabilhete);
+
+            bool sucesso = false;
+            if ((vendaBilheteAtual?.idvenda == null)|| (vendaBilheteAtual?.idvenda == 0)) {
+                //sucesso = await VendaBilheteService.createVendaBilhete(vendabilhete);
+                //print('IDREC -> ' + idReq.toString());
+                //print('VENDABILHETE.ID -> ' + vendabilhete.id.toString());
+                final idGerado = await VendaBilheteService.createVendaBilhete(vendabilhete);
+                if (idGerado != null) {
+                  
+                  var vendaBilheteAux = VendaBilhete(
+                        idvenda: idGerado,
+                        id: idReq,
+                        datavenda: dataVenda,
+                        datavencimento: dataVencimento,
+                        documento: '', // ou algum campo se houver
+                        valortotal: parseValor(valorTotalController.text),
+                        descontototal: parseValor(descontoTotalController.text),
+                        valorentrada: parseValor(valorEntradaController.text),
+                        observacao: observacaoController.text,
+                        solicitante: solicitanteController.text,
+                        identidade: selectedCliente != null ? int.tryParse(selectedCliente!) : null,
+                        idvendedor: selectedVendedor != null ? int.tryParse(selectedVendedor!) : null,
+                        idemissor: selectedEmissor != null ? int.tryParse(selectedEmissor!) : null,
+                        idmoeda: selectedMoeda != null ? int.tryParse(selectedMoeda!) : null,
+                        idformapagamento: selectedPagamento != null ? int.tryParse(selectedPagamento!) : null,
+                        idfilial: selectedFilial != null ? int.tryParse(selectedFilial!) : null,
+                        idfatura: int.tryParse(faturaController.text),
+                        idreciboreceber: int.tryParse(reciboController.text),
+                        chave: uuid.v4(),
+                        excluido: false,
+                        empresa: empresa,
+                        idcentrocusto: selectedCCusto != null ? int.tryParse(selectedCCusto!) : null,
+                        idgrupo: selectedGrupo != null ? int.tryParse(selectedGrupo!) : null,
+                      );
+
+                      atualizarVendaBilhete(vendaBilheteAux);
+
+                      final confirmar = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Confirmação'),
+                          content: const Text('Requisição salva com sucesso'),
+                          actions: [
+                           // TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('OK')),
+                          ],
+                        ),
+                      );
+
+                      onBilhete();
+
+                    //print('Venda: ${jsonEncode(venda.toJson())}');
+                    setState(() {
+                    });
+                }  
+
             } else {
               sucesso = await VendaBilheteService.updateVendaBilhete(vendabilhete);
+              final confirmar = await showDialog<bool>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('Informação.'),
+                  content: const Text('Requisição salva com sucesso.'),
+                  actions: [
+                    //TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Não')),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('OK')),
+                  ],
+                ),
+              );
+
             }
 
             if (sucesso) {
-              Navigator.pop(context, true);
+              //Navigator.pop(context, true);
             } else {
               // Trate o erro conforme necessário
             }
@@ -324,16 +474,110 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  void onCancelar() {
-    setState(() {
-      habilitaSalvarCancelar = true;
-      // TODO: lógica do botão Cancelar
-    });
+  void onExcluir(int? idvenda) async{
+    if ((vendaBilheteAtual?.idvenda != 0)&&(vendaBilheteAtual?.idvenda != null)){
+
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Confirmar Exclusão'),
+          content: const Text('Deseja realmente excluir esta venda?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+          ],
+        ),
+      );
+      if (confirmar == true) {
+          try {
+            if(idvenda != null){
+              await VendaBilheteService.deleteVendaBilhete(idvenda);
+              //mostrarMensagem(context, 'Venda excluída com sucesso!', titulo: 'Sucesso');
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Sucesso'),
+                    content: const Text('Venda excluída com sucesso!'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  );
+                },
+              );              
+              
+              Navigator.pop(context, true);
+            }
+
+          } catch (e) {
+            if (e is ApiException) {
+              mostrarMensagem(context, e.message, titulo: 'Erro');
+            } else {
+              mostrarMensagem(context, 'Erro inesperado: $e', titulo: 'Erro');
+            }
+          }
+
+      }
+
+
+    }
   }
 
 
-  void onExcluir() {
-    if ((widget.vendabilhete != null)&&(widget.vendabilhete?.idvenda != 0)&&(widget.vendabilhete?.idvenda != null)){
+  void onExcluirItem(int? id) async{
+    
+    if ((id != 0)&&(id != null)){
+
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Confirmar Exclusão'),
+          content: const Text('Deseja realmente excluir registro ?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+          ],
+        ),
+      );
+      if (confirmar == true) {
+          try {
+            if(id != null){
+              await ItemVendaBilheteService.deleteItemVendaBilhete(id);
+              //mostrarMensagem(context, 'Venda excluída com sucesso!', titulo: 'Sucesso');
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Sucesso'),
+                    content: const Text('Registro excluído com sucesso!'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  );
+                },
+              );              
+              
+              _carregarDadosIniciais();
+             // _reabrirFormularioRequisicao(vendabilhete: widget.vendabilhete?.toJson());
+              //Navigator.pop(context, true);
+            }
+
+          } catch (e) {
+            if (e is ApiException) {
+              mostrarMensagem(context, e.message, titulo: 'Erro');
+            } else {
+              mostrarMensagem(context, 'Erro inesperado: $e', titulo: 'Erro');
+            }
+          }
+
+      }
+
 
     }
   }
@@ -344,27 +588,19 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  void onRequisicao() {
-    // TODO: lógica do botão Requisição
-  }
-
-
   void onRecibo() {
     // TODO: lógica do botão Recibo
-    if ((widget.vendabilhete != null)&&(widget.vendabilhete?.idvenda != 0)&&(widget.vendabilhete?.idvenda != null)){
-    
-    }
   }
 
 
   void onBilhete() {
-    if ((widget.vendabilhete != null)&&(widget.vendabilhete?.idvenda != 0)&&(widget.vendabilhete?.idvenda != null)){
-      _abrirFormulario();
+    if ((vendaBilheteAtual?.idvenda != 0)&&(vendaBilheteAtual?.idvenda != null)){
+      _abrirFormularioAddBilhete();
     }
   }
 
 
-  Widget buildDropdownFilial(
+  Widget buildDropdownFilials(
     String label,
     String? selectedValue,
     Function(String?) onChanged,
@@ -399,7 +635,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  Widget buildDropdownCliente(
+  Widget buildDropdownClientes(
     String label,
     String? selectedValue,
     Function(String?) onChanged,
@@ -434,7 +670,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  Widget buildDropdownMoeda(
+  Widget buildDropdownMoedas(
     String label,
     String? selectedValue,
     Function(String?) onChanged,
@@ -469,7 +705,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  Widget buildDropdownVendedor(
+  Widget buildDropdownVendedors(
     String label,
     String? selectedValue,
     Function(String?) onChanged,
@@ -504,7 +740,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  Widget buildDropdownEmissor(
+  Widget buildDropdownEmissors(
     String label,
     String? selectedValue,
     Function(String?) onChanged,
@@ -539,70 +775,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  Widget buildDropdownPagamento(
-    String label,
-    String? selectedValue,
-    Function(String?) onChanged,
-    VoidCallback onClear,
-    List<Map<String, dynamic>> options,
-  ) {
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            value: selectedValue,
-            decoration: InputDecoration(labelText: label),
-            items: options
-                .map((item) => DropdownMenuItem(
-                      value: item['id'].toString(),
-                      child: Text(item['nome']),
-                    ))
-                .toList(),
-            onChanged: onChanged,
-            validator: (value) {
-              if (value == null && selectedGrupo == null) {
-                return 'meio pagamento obrigatório.';
-              }
-              return null;
-            },
-
-          ),
-        ),
-        IconButton(onPressed: onClear, icon: const Icon(Icons.clear)),
-      ],
-    );
-  }
-
-
-  Widget buildDropdown(
-    String label,
-    String? selectedValue,
-    Function(String?) onChanged,
-    VoidCallback onClear,
-    List<Map<String, dynamic>> options,
-  ) {
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            value: selectedValue,
-            decoration: InputDecoration(labelText: label),
-            items: options
-                .map((item) => DropdownMenuItem(
-                      value: item['id'].toString(),
-                      child: Text(item['nome']),
-                    ))
-                .toList(),
-            onChanged: onChanged,
-          ),
-        ),
-        IconButton(onPressed: onClear, icon: const Icon(Icons.clear)),
-      ],
-    );
-  }
-
-
-  Widget buildDatePickerEmissao(
+  Widget buildDatePickerVendas(
     String label,
     DateTime? date,
     Function(DateTime?) onChanged, {
@@ -732,28 +905,44 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
-  Widget buildDatePicker(String label, DateTime? date, Function(DateTime?) onChanged) {
-    return Row(
-      children: [
-        Expanded(
-          child: InputDecorator(
-            decoration: InputDecoration(labelText: label),
-            child: InkWell(
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: date ?? DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (picked != null) onChanged(picked);
-              },
-              child: Text(date != null ? DateFormat('dd/MM/yyyy').format(date) : 'Selecionar'),
-            ),
-          ),
-        ),
-        IconButton(onPressed: () => onChanged(null), icon: const Icon(Icons.clear)),
-      ],
+  Widget buildDatePicker({
+    required String label,
+    required DateTime? date,
+    required Function(DateTime?) onChanged,
+    bool isRequired = false,
+  }) {
+    return TextFormField(
+      readOnly: true,
+      controller: TextEditingController(
+        text: date != null ? DateFormat('dd/MM/yyyy').format(date) : '',
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: date != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () => onChanged(null),
+              )
+            : null,
+      ),
+      validator: (value) {
+        if (isRequired && date == null) {
+          return '$label obrigatório.';
+        }
+        return null;
+      },
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: date ?? DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) {
+          onChanged(picked);
+        }
+      },
     );
   }
 
@@ -769,10 +958,54 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
 
 
   void imprimirPDFRequisicao() async {
-    if ((widget.vendabilhete != null)&&(widget.vendabilhete?.idvenda != 0)&&(widget.vendabilhete?.idvenda != null)){
+    if ((vendaBilheteAtual?.idvenda != 0)&&(vendaBilheteAtual?.idvenda != null)){
+
+       // 🔥 Monta a lista para a tabela
+      final itensTabela = _itensVendaBilhete.map((item) => [
+        item.pax.toString(),
+        item.bilhete ?? '',
+        item.trecho ?? '',
+        item.tipovoo ?? '',
+        //item.cia ?? '',
+        'R\$ ${item.valorbilhete?.toStringAsFixed(2) ?? '0,00'}',
+        'R\$ ${item.valortaxabilhete?.toStringAsFixed(2) ?? '0,00'}',
+        'R\$ ${item.valortaxaservico?.toStringAsFixed(2) ?? '0,00'}',
+        'R\$ ${item.valorassento?.toStringAsFixed(2) ?? '0,00'}',
+      ]).toList();      
+
+      // Defina as larguras das colunas proporcionalmente
+      final columnWidths = {
+        0: const pw.FlexColumnWidth(2.0), // PAX
+        1: const pw.FlexColumnWidth(1.0), // Bilhete
+        2: const pw.FlexColumnWidth(1.0), // Trecho
+        3: const pw.FlexColumnWidth(0.5), // Tipo Voo
+        4: const pw.FlexColumnWidth(0.5), // CIA
+        5: const pw.FlexColumnWidth(0.8), // Tarifa
+        6: const pw.FlexColumnWidth(0.8), // Taxa Bilhete
+        7: const pw.FlexColumnWidth(0.8), // Taxa Serviço
+        8: const pw.FlexColumnWidth(0.8), // Assento
+      };
+
+
+      double totalValorBilhete = 0;
+      double totalValorTaxaBilhete = 0;
+      double totalValorTaxaServico = 0;
+      double totalValorAssento = 0;
+      double totalGeral = 0;
+
+      for (var item in _itensVendaBilhete) {
+        totalValorBilhete += item.valorbilhete ?? 0;
+        totalValorTaxaBilhete += item.valortaxabilhete ?? 0;
+        totalValorTaxaServico += item.valortaxaservico ?? 0;
+        totalValorAssento += item.valorassento ?? 0;
+      }
+
+      totalGeral = totalValorBilhete + totalValorTaxaBilhete + totalValorTaxaServico + totalValorAssento;
 
       final pdf = pw.Document();
       final dataAtual = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      final enderecoFilial = await FilialService.getFilialById(vendaBilheteAtual!.idfilial.toString());
+      final enderecoEntidade = await EntidadeService.getEntidadeById(vendaBilheteAtual!.identidade.toString());
 
       final imageLogo = await imageFromAssetBundle('assets/logo.png'); // substitua pelo caminho correto do seu logo
 
@@ -794,11 +1027,11 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('Empresa Exemplo Ltda.', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
-                          pw.Text('Rua das Flores, 123'),
-                          pw.Text('Centro, Recife - PE, 50000-000'),
-                          pw.Text('Tel: (81) 99999-9999  Cel: (81) 98888-8888'),
-                          pw.Text('CNPJ: 12.345.678/0001-90  Email: contato@exemplo.com'),
+                          pw.Text(enderecoFilial.nome.toString(), style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                          pw.Text(enderecoFilial.logradouro.toString() + ', ' + enderecoFilial.numero.toString() + ' ' + enderecoFilial.complemento.toString()),
+                          pw.Text(enderecoFilial.bairro.toString() + ',' + enderecoFilial.cidade.toString() + ' - ' + enderecoFilial.estado.toString() +  ', ' + enderecoFilial.cep.toString()),
+                          pw.Text('Tel: ' + enderecoFilial.telefone1.toString() + '  Cel: ' + enderecoFilial.celular1.toString()),
+                          pw.Text('CNPJ: ' + enderecoFilial.cnpjcpf.toString() + '  Email: ' + enderecoFilial.email.toString()),
                         ],
                       ),
                     ),
@@ -814,7 +1047,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                         child: pw.Text('REQUISIÇÃO', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
                       ),
                     ),
-                    pw.Text('Nº 123456'),
+                    pw.Text('Nº ' + vendaBilheteAtual!.id.toString().padLeft(5, '0')),
                   ],
                 ),
                 pw.SizedBox(height: 4),
@@ -825,28 +1058,86 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                   ],
                 ),
                 pw.SizedBox(height: 4),
-                pw.Text('Cliente: João da Silva'),
-                pw.Text('Av. Principal, 456, Apto 101, Boa Viagem, Recife - PE, 51000-000'),
+                pw.Text('Cliente: ' + enderecoEntidade.nome.toString()),
+                pw.Text(enderecoEntidade.logradouro.toString() +  ',' + enderecoEntidade.numero.toString() + '  ' + enderecoEntidade.complemento.toString() + ', ' +
+                        enderecoEntidade.bairro.toString() + ', ' + enderecoEntidade.cidade.toString() + ' - '  + enderecoEntidade.estado.toString() + ', ' + enderecoEntidade.cep.toString()),
                 pw.SizedBox(height: 12),
 
                 // 3. Observação
                 pw.Text('Observação:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 // 4. Conteúdo da Observação
-                pw.Text('Solicitação de emissão de bilhetes conforme acordado com o cliente.'),
+                pw.Text(vendaBilheteAtual!.observacao.toString()),
                 pw.SizedBox(height: 12),
 
+
                 // 5. Lista de itens
-                pw.Table.fromTextArray(
-                  headers: ['PAX', 'Bilhete', 'Valor'],
-                  data: [
-                    ['1', '0001234567890', 'R\$ 200,00'],
-                    ['2', '0001234567891', 'R\$ 220,00'],
+                pw.Table(
+                  columnWidths: columnWidths,
+                  border: null, // 🔥 Sem linhas da tabela
+                  children: [
+                    // 🔥 Cabeçalho personalizado
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                      children: [
+                        for (final header in [
+                          'Pax', 'Bilhete', 'Trecho', 'T.Voo', 'Cia',
+                          'Tarifa', 'Taxa', 'Serviço', 'Assento'
+                        ])
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(4),
+                            child: pw.Text(
+                              header,
+                              style: pw.TextStyle(
+                                fontSize: 9,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.black,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    // 🔥 Dados dos itens
+                    ..._itensVendaBilhete.map(
+                      (item) => pw.TableRow(
+                        decoration: const pw.BoxDecoration(
+                          color: PdfColors.white,
+                        ),
+                        children: [
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text(item.pax.toString(), style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text(item.bilhete ?? '', style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text(item.trecho ?? '', style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text((item.tipovoo ?? '').length >= 3 ? item.tipovoo!.substring(0, 3) : (item.tipovoo ?? ''), style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text(item.cia ?? '', style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text('R\$ ${item.valorbilhete?.toStringAsFixed(2) ?? '0,00'}', style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text('R\$ ${item.valortaxabilhete?.toStringAsFixed(2) ?? '0,00'}', style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text('R\$ ${item.valortaxaservico?.toStringAsFixed(2) ?? '0,00'}', style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(4),
+                              child: pw.Text('R\$ ${item.valorassento?.toStringAsFixed(2) ?? '0,00'}', style: pw.TextStyle(fontSize: 8))),
+                        ],
+                      ),
+                    ),
                   ],
-                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
-                  cellAlignment: pw.Alignment.centerLeft,
-                  cellHeight: 20,
                 ),
+
+
                 pw.SizedBox(height: 12),
 
                 // 6. Totais
@@ -857,11 +1148,12 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('Total Bilhetes: 2'),
-                          pw.Text('Total Serviços: R\$ 50,00'),
-                          pw.Text('Total Taxas: R\$ 30,00'),
-                          pw.Text('Total Assentos: R\$ 40,00'),
-                          pw.Text('Total Geral: R\$ 320,00'),
+                          pw.Text('Total Tarifa: R\$ ${totalValorBilhete.toStringAsFixed(2)}'),
+                          pw.Text('Total Taxa: R\$ ${totalValorTaxaBilhete.toStringAsFixed(2)}'),
+                          pw.Text('Total Serviço: R\$ ${totalValorTaxaServico.toStringAsFixed(2)}'),
+                          pw.Text('Total Assento: R\$ ${totalValorAssento.toStringAsFixed(2)}'),
+                          pw.SizedBox(height: 8),
+                          pw.Text('Total Geral: R\$ ${totalGeral.toStringAsFixed(2)}'),
                         ],
                       ),
                     ),
@@ -869,10 +1161,10 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('Pagamento: Cartão de Crédito'),
-                          pw.Text('Vencimento: 30/09/2025'),
-                          pw.Text('Vendedor: Maria Vendedora'),
-                          pw.Text('Emissor: José Emissor'),
+                          pw.Text('Pagamento: ' + vendaBilheteAtual!.pagamento.toString()),
+                          pw.Text('Vencimento: ' + _formatarData(vendaBilheteAtual!.datavencimento.toString()) ),
+                          pw.Text('Vendedor: ' + vendaBilheteAtual!.vendedor.toString()),
+                          pw.Text('Emissor: ' + vendaBilheteAtual!.emissor.toString()),
                           pw.Text(''),
                         ],
                       ),
@@ -889,12 +1181,12 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                       child: pw.Column(
                         children: [
                           pw.Text(
-                            'Recebi(emos) de Empresa Exemplo Ltda., a(s) passagem(ns) discriminada(s), reconhecendo-o SOLICITAÇÃO Sr(a):',
+                            'Recebi(emos) de ' + enderecoFilial.nome.toString() + ',  ' + ' a(s) passagem(ns) discriminada(s), reconhecendo-o SOLICITAÇÃO Sr(a):',
                             textAlign: pw.TextAlign.justify,
                           ),
                           pw.SizedBox(height: 32),
                           pw.Divider(thickness: 1),
-                          pw.Text('João Solicitante'),
+                          pw.Text(vendaBilheteAtual!.solicitante.toString()),
                         ],
                       ),
                     ),
@@ -902,10 +1194,12 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                     pw.Expanded(
                       child: pw.Column(
                         children: [
-                          pw.Text('Recife, 25 de setembro de 2025'),
+                          pw.Text(''),
+                          pw.SizedBox(height: 32),
+                          pw.Text(enderecoFilial.cidade.toString() +  ', ' + formatarDataPorExtenso(DateTime.now())),
                           pw.SizedBox(height: 32),
                           pw.Divider(thickness: 1),
-                          pw.Text('João da Silva'),
+                          pw.Text(enderecoEntidade.nome.toString()),
                         ],
                       ),
                     ),
@@ -919,7 +1213,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
 
       await Printing.sharePdf(
         bytes: await pdf.save(),
-        filename: 'requisicao.pdf',
+        filename: 'Requisicao_bilhete.pdf',
       );
     }
   }
@@ -994,7 +1288,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
           child: const Text('Cancelar'),
         ),*/
         ElevatedButton(
-          onPressed: habilitaSalvarCancelar ? onExcluir : null,
+          onPressed: habilitaSalvarCancelar ? () => onExcluir(widget.vendabilhete!.idvenda!) : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
@@ -1033,6 +1327,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                   child: DataTable(
                     columns: const [
                       DataColumn(label: Text('Ações')),
+                      DataColumn(label: Text('Id')),
                       DataColumn(label: Text('Pax')),
                       DataColumn(label: Text('Bilhete')),
                       DataColumn(label: Text('Trecho')),
@@ -1042,9 +1337,11 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                     rows: _itensVendaBilhete.map((item) {
                       return DataRow(cells: [
                         DataCell(Row(children: [
-                          IconButton(onPressed: () {}, icon: const Icon(Icons.edit)),
-                          IconButton(onPressed: () {}, icon: const Icon(Icons.delete, color: Colors.red)),
+                          //IconButton(onPressed: () =>  print('Item clicado: ${item.toJson()}'), icon: const Icon(Icons.edit)),
+                          IconButton(onPressed: () =>  _abrirFormularioAddBilhete(itemvendabilhete: item.toJson()), icon: const Icon(Icons.edit)),
+                          IconButton(onPressed: () => onExcluirItem(item.id), icon: const Icon(Icons.delete, color: Colors.red)),
                         ])),
+                        DataCell(Text(item.id != null ? item.id.toString() : '')),
                         DataCell(Text(item.pax ?? '')),
                         DataCell(Text(item.bilhete ?? '')),
                         DataCell(Text(item.trecho ?? '')),
@@ -1066,10 +1363,362 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   }
 
 
+  Widget buildDropdown(
+    String label,
+    String? selectedValue,
+    Function(String?) onChanged,
+    VoidCallback onClear,
+    List<Map<String, dynamic>> options,
+  ) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true, // 🔥 Isso resolve o estouro
+      value: selectedValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: selectedValue != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(
+                item['nome'],
+                overflow: TextOverflow.ellipsis, // 🔥 Evita estouro
+                softWrap: false,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      
+    );
+  }
+
+
+  Widget buildDropdownPagamento(
+    String label,
+    String? selectedValue,
+    Function(String?) onChanged,
+    VoidCallback onClear,
+    List<Map<String, dynamic>> options,
+  ) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true, // 🔥 Isso resolve o estouro
+      value: selectedValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: selectedValue != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(
+                item['nome'],
+                overflow: TextOverflow.ellipsis, // 🔥 Evita estouro
+                softWrap: false,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null && selectedGrupo == null) {
+          return 'meio pagamento obrigatório.';
+        }
+        return null;
+      },
+
+    );
+  }
+
+
+  Widget buildDropdownCliente(
+    String label,
+    String? selectedValue,
+    Function(String?) onChanged,
+    VoidCallback onClear,
+    List<Map<String, dynamic>> options,
+  ) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true, // 🔥 Isso resolve o estouro
+      value: selectedValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: selectedValue != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(
+                item['nome'],
+                overflow: TextOverflow.ellipsis, // 🔥 Evita estouro
+                softWrap: false,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null && selectedCliente == null) {
+          return 'cliente obrigatório.';
+        }
+        return null;
+      },
+
+    );
+  }
+
+
+  Widget buildDropdownFilial(
+    String label,
+    String? selectedValue,
+    Function(String?) onChanged,
+    VoidCallback onClear,
+    List<Map<String, dynamic>> options,
+  ) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true, // 🔥 Isso resolve o estouro
+      value: selectedValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: selectedValue != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(
+                item['nome'],
+                overflow: TextOverflow.ellipsis, // 🔥 Evita estouro
+                softWrap: false,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null && selectedFilial == null) {
+          return 'filial obrigatória.';
+        }
+        return null;
+      },
+
+    );
+  }
+
+
+  Widget buildDropdownMoeda(
+    String label,
+    String? selectedValue,
+    Function(String?) onChanged,
+    VoidCallback onClear,
+    List<Map<String, dynamic>> options,
+  ) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true, // 🔥 Isso resolve o estouro
+      value: selectedValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: selectedValue != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(
+                item['nome'],
+                overflow: TextOverflow.ellipsis, // 🔥 Evita estouro
+                softWrap: false,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null && selectedMoeda == null) {
+          return 'moeda obrigatória.';
+        }
+        return null;
+      },
+
+    );
+  }
+
+
+  Widget buildDropdownVendedor(
+    String label,
+    String? selectedValue,
+    Function(String?) onChanged,
+    VoidCallback onClear,
+    List<Map<String, dynamic>> options,
+  ) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true, // 🔥 Isso resolve o estouro
+      value: selectedValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: selectedValue != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(
+                item['nome'],
+                overflow: TextOverflow.ellipsis, // 🔥 Evita estouro
+                softWrap: false,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null && selectedVendedor == null) {
+          return 'vendedor obrigatório.';
+        }
+        return null;
+      },
+
+    );
+  }
+
+
+  Widget buildDropdownEmissor(
+    String label,
+    String? selectedValue,
+    Function(String?) onChanged,
+    VoidCallback onClear,
+    List<Map<String, dynamic>> options,
+  ) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true, // 🔥 Isso resolve o estouro
+      value: selectedValue,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: selectedValue != null
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(
+                item['nome'],
+                overflow: TextOverflow.ellipsis, // 🔥 Evita estouro
+                softWrap: false,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null && selectedEmissor == null) {
+          return 'emissor obrigatório.';
+        }
+        return null;
+      },
+
+    );
+  }
+
+  /// ---------------------------
+  /// Layout Responsivo
+  /// ---------------------------
+  Widget buildFieldGroup(BoxConstraints constraints, List<Widget> fields) {
+    double maxWidth = constraints.maxWidth;
+
+    int columns;
+    if (maxWidth >= 1400) {
+      columns = 4;
+    } else if (maxWidth >= 1000) {
+      columns = 3;
+    } else if (maxWidth >= 600) {
+      columns = 2;
+    } else {
+      columns = 1;
+    }
+
+    return GridView(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 6, // 🔥 Controle da altura (quanto maior, mais achatado)
+      ),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: fields,
+    );
+  }
+
+
+  Widget buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool readOnly = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
+
+  /// ---------------------------
+  /// Build Geral
+  /// ---------------------------
   @override
   Widget build(BuildContext context) {
+    bool showDateError = false;
+    DateTime? selectedDate;
     return Scaffold(
-      appBar: AppBar(title: const Text('Requisição de Bilhete')),
+      appBar: AppBar(title: const Text('Add Bilhete')),
       body: _isLoading
           ? const Center(
               child: Column(
@@ -1079,7 +1728,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                   SizedBox(height: 16),
                   Text(
                     "Aguarde, carregando os dados...",
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 14),
                   ),
                 ],
               ),
@@ -1088,82 +1737,134 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: IntrinsicHeight(
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                        
-                          children: [
-                            Row(children: [
-                              Expanded(child: TextFormField(controller: nroController,  readOnly: true, decoration: const InputDecoration(labelText: 'Nro'))),
-                              const SizedBox(width: 16),
-                              Expanded(child: buildDropdownFilial('Filial', selectedFilial, (value) => setState(() => selectedFilial = value), () => setState(() => selectedFilial = null), filiais)),
-                              const SizedBox(width: 16),
-                              Expanded(child: buildDatePickerEmissao('Data Venda', dataVenda, (val) => setState(() => dataVenda = val))),
-                            ]),
-                            const SizedBox(height: 16),
-                            Row(children: [
-                              Expanded(child: buildDropdownCliente('Cliente', selectedCliente, (value) => setState(() => selectedCliente = value), () => setState(() => selectedCliente = null), clientes)),
-                              const SizedBox(width: 16),
-                              Expanded(child: buildDropdown('C.Custo', selectedCCusto, (value) => setState(() => selectedCCusto = value), () => setState(() => selectedCCusto = null), ccustos)),
-                              const SizedBox(width: 16),
-                              Expanded(child: buildDatePicker('Data Vencimento', dataVencimento, (val) => setState(() => dataVencimento = val))),
-                            ]),
-                            const SizedBox(height: 16),
-                            Row(children: [
-                              Expanded(child: buildDropdownVendedor('Vendedor', selectedVendedor, (value) => setState(() => selectedVendedor = value), () => setState(() => selectedVendedor = null), vendedores)),
-                              const SizedBox(width: 16),
-                              Expanded(child: buildDropdownEmissor('Emissor', selectedEmissor, (value) => setState(() => selectedEmissor = value), () => setState(() => selectedEmissor = null), emissores)),
-                              const SizedBox(width: 16),
-                              Expanded(child: buildDropdownMoeda('Moeda', selectedMoeda, (value) => setState(() => selectedMoeda = value), () => setState(() => selectedMoeda = null), moedas)),
-                            ]),
-                            const SizedBox(height: 16),
-                            Row(children: [
-                              Expanded(child: buildDropdownPagamento('Pagamento', selectedPagamento, (value) => setState(() => selectedPagamento = value), () => setState(() => selectedPagamento = null), pagamentos)),
-                              const SizedBox(width: 16),
-                              Expanded(child: buildDropdown('Grupo', selectedGrupo, (value) => setState(() => selectedGrupo = value), () => setState(() => selectedGrupo = null), grupos)),
-                              const SizedBox(width: 16),
-                              Expanded(child: TextFormField(controller: solicitanteController, decoration: const InputDecoration(labelText: 'Solicitante'),  
-                                        //validator: (value) {
-                                        //      if ((value == null || value.isEmpty) && (observacaoController.text.isEmpty)) {
-                                        //        return 'Preencha o solicitante ou a observação';
-                                        //      }
-                                        //      return null;
-                                        //},
-                                        )),
-                            ]),
-                            const SizedBox(height: 16),
-                            Row(children: [
-                              Expanded(child: TextFormField(controller: observacaoController, decoration: const InputDecoration(labelText: 'Observação'))),
-                              const SizedBox(width: 16),
-                              Expanded(child: TextFormField(controller: faturaController,  readOnly: true, decoration: const InputDecoration(labelText: 'Fatura'))),
-                              const SizedBox(width: 16),
-                              Expanded(child: TextFormField(controller: reciboController,  readOnly: true, decoration: const InputDecoration(labelText: 'Recibo'))),
-                              const SizedBox(width: 16),
-                              //Expanded(child: TextFormField(controller: valorEntradaController,  readOnly: true, decoration: const InputDecoration(labelText: 'Val.Entrada'))),
-                              //const SizedBox(width: 16),
-                              Expanded(child: TextFormField(controller: valorTotalController,  readOnly: true, decoration: const InputDecoration(labelText: 'Va.Total'))),
-                              const SizedBox(width: 16),
-                              Expanded(child: TextFormField(controller: descontoTotalController,  readOnly: true, decoration: const InputDecoration(labelText: 'Desc.Total'))),
-                            ]),
-                            const SizedBox(height: 16),
-                            buildButtonsRow(),
-                            const SizedBox(height: 24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
 
-                            /// LISTA COM TAMANHO FIXO + SCROLL VERTICAL
-                            SizedBox(
-                              width: double.infinity,
-                              height: 400, // ou ajuste conforme necessário
-                              child: buildListView(),
-                            ),
-                          ],
+                        buildFieldGroup(constraints, [
+
+                          buildTextField('Nro', nroController, readOnly: true),
+
+                          buildDropdownFilial(
+                            'Filial',
+                            selectedFilial,
+                            (value) => setState(() => selectedFilial = value),
+                            () => setState(() => selectedFilial = null),
+                            filiais,
+                          ),
+
+                          //buildDatePickerVenda('Data Venda', dataVenda, (val) => setState(() => dataVenda = val)),
+
+                          buildDatePicker(
+                            label: 'Data Venda',
+                            date: dataVenda,
+                            onChanged: (val) => setState(() => dataVenda = val),
+                            isRequired: true,
+                          ),
+
+                          buildDropdownCliente(
+                            'Cliente',
+                            selectedCliente,
+                            (value) => setState(() => selectedCliente = value),
+                            () => setState(() => selectedCliente = null),
+                            clientes,
+                          ),
                           
-                        
-                        ),
-                      ),
+                          buildDropdown(
+                            'C.Custo',
+                            selectedCCusto,
+                            (value) => setState(() => selectedCCusto = value),
+                            () => setState(() => selectedCCusto = null),
+                            ccustos,
+                          ),
+
+                          //buildDatePicker('Data Vencimento', dataVencimento, (val) => setState(() => dataVencimento = val)),
+
+                          buildDatePicker(
+                            label: 'Data Vencimento',
+                            date: dataVencimento,
+                            onChanged: (val) => setState(() => dataVencimento = val),
+                            isRequired: true,
+                          ),
+
+                          buildDropdownVendedor(
+                            'Vendedor',
+                            selectedVendedor,
+                            (value) => setState(() => selectedVendedor = value),
+                            () => setState(() => selectedVendedor = null),
+                            vendedores,
+                          ),
+
+                          buildDropdownEmissor(
+                            'Emissor',
+                            selectedEmissor,
+                            (value) => setState(() => selectedEmissor = value),
+                            () => setState(() => selectedEmissor = null),
+                            emissores,
+                          ),
+
+                          buildDropdownMoeda(
+                            'Moeda',
+                            selectedMoeda,
+                            (value) => setState(() => selectedMoeda = value),
+                            () => setState(() => selectedMoeda = null),
+                            moedas,
+                          ),
+
+                          buildDropdownPagamento(
+                            'Pagamento',
+                            selectedPagamento,
+                            (value) => setState(() => selectedPagamento = value),
+                            () => setState(() => selectedPagamento = null),
+                            pagamentos,
+                          ),
+
+                          buildDropdown(
+                            'C.Custo',
+                            selectedCCusto,
+                            (value) => setState(() => selectedCCusto = value),
+                            () => setState(() => selectedCCusto = null),
+                            ccustos,
+                          ),
+
+                          buildDropdown(
+                            'Grupo',
+                            selectedGrupo,
+                            (value) => setState(() => selectedGrupo = value),
+                            () => setState(() => selectedGrupo = null),
+                            grupos,
+                          ),
+
+                          buildTextField('Solicitante', solicitanteController),
+
+                          buildTextField('Observação', observacaoController),
+
+                          buildTextField('Fatura', faturaController, readOnly: true),
+
+                          buildTextField('Recibo', reciboController, readOnly: true),
+
+                          buildTextField('Val.Total', valorTotalController, readOnly: true),
+
+                          buildTextField('Desc.Total', descontoTotalController, readOnly: true),
+
+                        ]),
+
+                        const SizedBox(height: 24),
+
+                        ///  Botões
+                        buildButtonsRow(),
+
+                        const SizedBox(height: 24),
+
+                        /// LISTA COM TAMANHO FIXO + SCROLL VERTICAL
+                        SizedBox(
+                          width: double.infinity,
+                          height: 400, // ou ajuste conforme necessário
+                          child: buildListView(),
+                        ),                        
+                      ],
                     ),
                   ),
                 );
@@ -1171,5 +1872,25 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
             ),
     );
   }
+
+
+  void mostrarMensagem(BuildContext context, String mensagem, {String titulo = 'Atenção'}) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(titulo),
+          content: Text(mensagem),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
 }

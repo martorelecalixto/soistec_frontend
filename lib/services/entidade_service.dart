@@ -144,7 +144,6 @@ class EntidadeService {
     }
   }
 
-
   static Future<bool> createEntidade(Entidade entidade) async {
     final resultado = json.encode(entidade.toJson());
     //print('Dados decodificados: $resultado');
@@ -169,4 +168,27 @@ class EntidadeService {
     final response = await http.delete(Uri.parse('$Url/$identidade'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
+
+  static Future<Entidade> getEntidadeById(String identidade) async {
+    final prefs = await SharedPreferences.getInstance();
+    final empresa = prefs.getString('empresa');
+
+    if (empresa == null || empresa.isEmpty) {
+      throw Exception('Empresa não definida nas preferências.');
+    }
+
+    final uri = Uri.parse('$Url/$identidade'); // <--- URL com o ID na rota
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      return Entidade.fromJson(jsonData);
+    } else if (response.statusCode == 404) {
+      throw Exception('Entidade não encontrada');
+    } else {
+      throw Exception('Erro ao buscar entidade: ${response.reasonPhrase}');
+    }
+  }
+
 }

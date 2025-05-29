@@ -88,4 +88,27 @@ class FilialService {
     final response = await http.delete(Uri.parse('$Url/$idfilial'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
+
+  static Future<Filial> getFilialById(String idfilial) async {
+    final prefs = await SharedPreferences.getInstance();
+    final empresa = prefs.getString('empresa');
+
+    if (empresa == null || empresa.isEmpty) {
+      throw Exception('Empresa não definida nas preferências.');
+    }
+
+    final uri = Uri.parse('$Url/$idfilial'); // <--- URL com o ID na rota
+
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+
+      return Filial.fromJson(jsonData);
+    } else if (response.statusCode == 404) {
+      throw Exception('Entidade não encontrada');
+    } else {
+      throw Exception('Erro ao buscar filial: ${response.reasonPhrase}');
+    }
+  }
+
 }

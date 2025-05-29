@@ -146,6 +146,8 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
         'idreciboreceber': f.idreciboreceber,
         'idgrupo': f.idgrupo,
         'idfilial': f.idfilial,
+        'vendedor': f.vendedor,
+        'emissor': f.emissor,
       }).toList();
 
       setState(() {
@@ -172,7 +174,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
   }
 
 
-  void _abrirFormulario({Map<String, dynamic>? vendabilhete}) async {
+  void _abrirFormularioRequisicaoBilhete({Map<String, dynamic>? vendabilhete}) async {
     final resultado = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -188,7 +190,9 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
       ),
     );
 
-  if (resultado == true) _carregarVendaBilhete();
+    _carregarVendaBilhete();
+
+    //if (resultado == true) _carregarVendaBilhete();
   }
 
 
@@ -438,7 +442,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                  onPressed: () => _abrirFormulario(),
+                  onPressed: () => _abrirFormularioRequisicaoBilhete(),
                   icon: const Icon(Icons.add),
                   label: const Text('Nova Venda'),
                 ),
@@ -515,7 +519,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit, color: Colors.orange),
-                                onPressed: () => _abrirFormulario(vendabilhete: vendabilhete),
+                                onPressed: () => _abrirFormularioRequisicaoBilhete(vendabilhete: vendabilhete),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
@@ -592,6 +596,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
     );
   } 
 
+
   Widget _buildListaMobile(TextStyle? textStyle) {
     if (vendabilheteFiltradas.isEmpty) {
       return const Center(child: Text('Nenhuma venda encontrada.'));
@@ -618,7 +623,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.orange),
-                      onPressed: () => _abrirFormulario(vendabilhete: vendabilhete),
+                      onPressed: () => _abrirFormularioRequisicaoBilhete(vendabilhete: vendabilhete),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),

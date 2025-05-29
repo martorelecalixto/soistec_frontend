@@ -54,7 +54,7 @@
       }
     }
 
-    static Future<bool> createVendaBilhete(VendaBilhete venda) async {
+    static Future<int?> createVendaBilhete(VendaBilhete venda) async {
       final resultado = json.encode(venda.toJson());
      // print('Dados decodificados: $resultado');
       final response = await http.post(
@@ -62,9 +62,13 @@
         headers: {'Content-Type': 'application/json'},
         body: json.encode(venda.toJson()),
       );
-     // print('Status Code: ${response.statusCode}');
-     // print('Body: ${response.body}');
-      return response.statusCode == 201;
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data['idvenda']; // Aqui você pega o ID retornado
+      } else {
+        return null;
+      }
     }
 
     static Future<bool> updateVendaBilhete(VendaBilhete venda) async {
@@ -106,16 +110,6 @@
       }
     }
 
-/*
-    static Future<bool> deleteVendaBilhete(int idvenda) async {
-      print('NRO VENDA -' + idvenda.toString());
-      print('ENTROU');
-      final response = await http.delete(Uri.parse('$Url/$idvenda'));
-      print('SAIU');
-      return response.statusCode == 200 || response.statusCode == 204;
-    }
-*/
-
     static Future<int> incVendaBilhete(int idempresa) async {
       final queryParams = {
         'idempresa': idempresa.toString(),
@@ -151,6 +145,27 @@
       }
     }
 
+    static Future<VendaBilhete> getVendasBilheteById(String idvenda) async {
+      final prefs = await SharedPreferences.getInstance();
+      final empresa = prefs.getString('empresa');
+
+      if (empresa == null || empresa.isEmpty) {
+        throw Exception('Empresa não definida nas preferências.');
+      }
+
+      final uri = Uri.parse('$Url/$idvenda'); // <--- URL com o ID na rota
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        return VendaBilhete.fromJson(jsonData);
+      } else if (response.statusCode == 404) {
+        throw Exception('Venda não encontrada');
+      } else {
+        throw Exception('Erro ao buscar venda: ${response.reasonPhrase}');
+      }
+    }
 
   }
 

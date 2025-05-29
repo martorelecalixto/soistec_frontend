@@ -28,6 +28,8 @@ class VendaBilhete {
   final double? valorentrada;
   final String? entidade;
   final String? pagamento;
+  final String? vendedor;
+  final String? emissor;
 
   VendaBilhete({
     this.idvenda,
@@ -59,6 +61,8 @@ class VendaBilhete {
     this.valorentrada,
     this.entidade,
     this.pagamento,
+    this.vendedor,
+    this.emissor,
   });
 
   factory VendaBilhete.fromJson(Map<String, dynamic> json) {
@@ -92,6 +96,8 @@ class VendaBilhete {
       valorentrada: (json['valorentrada'] as num?)?.toDouble(),
       entidade: json['entidade'] as String?,
       pagamento: json['pagamento'] as String?,
+      vendedor: json['vendedor'] as String?,
+      emissor: json['emissor'] as String?,
     );
   }
 
@@ -126,6 +132,8 @@ class VendaBilhete {
       'valorentrada': valorentrada,
       'entidade': entidade,
       'pagamento': pagamento,
+      'vendedor': vendedor,
+      'emissor': emissor,
     };
   }
 }

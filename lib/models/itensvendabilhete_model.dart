@@ -30,6 +30,8 @@ class ItensVendaBilhete {
   final DateTime? datadesembarque;
   final DateTime? horadesembarque;
   final String? chave;
+  final String? cia;
+  final String? operadora;
 
   ItensVendaBilhete({
     this.id,
@@ -63,6 +65,8 @@ class ItensVendaBilhete {
     this.datadesembarque,
     this.horadesembarque,
     this.chave,
+    this.cia,
+    this.operadora,
   });
 
   factory ItensVendaBilhete.fromJson(Map<String, dynamic> json) {
@@ -103,6 +107,8 @@ class ItensVendaBilhete {
       horadesembarque: json['horadesembarque'] is String ? DateTime.parse(json['horadesembarque']) : json['horadesembarque'], 
 
       chave: json['chave'] as String?,
+      cia: json['cia'] as String?,
+      operadora: json['operadora'] as String?,
     );
   }
 
@@ -139,6 +145,8 @@ class ItensVendaBilhete {
       'datadesembarque': datadesembarque?.toIso8601String(),
       'horadesembarque': horadesembarque?.toIso8601String(),
       'chave': chave,
+      'cia': cia,
+      'operadora': operadora,
     };
   }
 }
