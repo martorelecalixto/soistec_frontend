@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const double kFontSizeTitle = 20;
 const double kFontSizeSubtitle = 14;
-const double kFontSizeMenu = 12;
-const double kFontSizeFooter = 12;
+const double kFontSizeMenu = 10;
+const double kFontSizeFooter = 10;
 const double kMenuItemSpacing = 0.0; // Ajuste este valor conforme necessário
 
 class BaseLayout extends StatefulWidget {
@@ -24,15 +24,21 @@ class _BaseLayoutState extends State<BaseLayout> {
   bool isSidebarExpanded = true;
   bool isMobile = false;
   String selectedPage = '';
+  
 
   final Map<String, IconData> menuItems = {
     'Home': Icons.home,
     'Empresa': Icons.business,
     'Filial': Icons.account_tree,
     'Atividade': Icons.work,
+    'Acomodacao': Icons.hotel,
+    'TipoServico': Icons.design_services,
     'Entidade': Icons.account_balance,
     'VendaBilhete': Icons.confirmation_number,
-    'Venda Serviço': Icons.miscellaneous_services,
+    'Venda Serviço': Icons.display_settings,
+    'TituloReceber': Icons.credit_score,
+    'TituloPagar': Icons.credit_card_off,
+    'ReciboReceber': Icons.receipt,
     'Emissão Fatura': Icons.receipt_long,
     'Reemissão Fatura': Icons.receipt,
     'Lançamento': Icons.playlist_add_check,
@@ -65,7 +71,14 @@ class _BaseLayoutState extends State<BaseLayout> {
   void _navegarPara(String label) {
     if (label == 'Sair') {
       _logout();
-    } else {
+    } else
+    if (label == 'Venda Serviço') {
+      Navigator.pushReplacementNamed(
+        context,
+        '/vendahotel',
+      );
+    }    
+    else {
       Navigator.pushReplacementNamed(
         context,
         '/${label.toLowerCase().replaceAll(' ', '_')}',
@@ -76,6 +89,7 @@ class _BaseLayoutState extends State<BaseLayout> {
 
 
 Widget _buildDrawerItem(String label, IconData icon) {
+
   final bool selected = widget.titulo == label;
   return ListTile(
     dense: true, // Reduz a altura vertical

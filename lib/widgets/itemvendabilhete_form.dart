@@ -1,37 +1,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:sistrade/services/filial_service.dart';
-import 'package:sistrade/services/moeda_service.dart';
 import 'package:sistrade/services/entidade_service.dart';
 import '../services/vendabilhete_service.dart';
-import '../services/entidade_service.dart';
-import '../services/moeda_service.dart';
-import '../services/filial_service.dart';
-import '../services/formapagamento_service.dart';
-import '../services/grupo_service.dart';
-import '../services/centrocusto_service.dart';
 import '../services/itensvendabilhete_service.dart';
 
-import 'package:sistrade/models/centrocusto_model.dart';
-import '../models/vendabilhete_model.dart';
 import '../models/itensvendabilhete_model.dart';
 
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 
 class ItemVendaBilheteForm extends StatefulWidget {
   final ItensVendaBilhete? itemvendabilhete;
   final int idVenda;
+  final int? idFatura;
+  final int? idReciboReceber;
   final double? width;
   final double? height;
   
@@ -40,6 +26,8 @@ class ItemVendaBilheteForm extends StatefulWidget {
     super.key,
     this.itemvendabilhete,
     required this.idVenda,
+    this.idFatura,
+    this.idReciboReceber,
     this.width,
     this.height,
   });
@@ -48,32 +36,32 @@ class ItemVendaBilheteForm extends StatefulWidget {
   _ItemVendaBilheteFormState createState() => _ItemVendaBilheteFormState();
 }
 
-
 class CentavosInputFormatter extends TextInputFormatter {
+  final NumberFormat currencyFormat = NumberFormat.simpleCurrency(
+    locale: 'pt_BR',
+    decimalDigits: 2,
+    name: '',
+  );
+
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
 
-    if (newText.isEmpty) {
-      return newValue.copyWith(text: '');
-    }
+    if (digitsOnly.isEmpty) digitsOnly = '0';
 
-    double value = double.parse(newText) / 100;
+    double value = double.parse(digitsOnly) / 100.0;
 
-    final formatter = NumberFormat.currency(locale: 'pt_BR', symbol: '', decimalDigits: 2);
-
-    String newString = formatter.format(value);
+    final newText = currencyFormat.format(value);
 
     return TextEditingValue(
-      text: newString.trim(),
-      selection: TextSelection.collapsed(offset: newString.length),
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
     );
   }
 }
-
 
 class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
   final _formKey = GlobalKey<FormState>();
@@ -103,6 +91,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
   String? selectedTipoBilhete;
 
   bool habilitaSalvarCancelar = true;
+  bool bloquearRequisicao= false;
 
   List<Map<String, dynamic>> operadoras = [];
   List<Map<String, dynamic>> cias = [];
@@ -139,35 +128,39 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
 
   Future<void> _carregarDadosIniciais() async {
     await Future.delayed(const Duration(milliseconds: 500));
+
+    bool bloquear = await bloquearVenda();
     nroVendaController.text = widget.idVenda.toString();
+
     // print('Item que chegou: ${itensVendaBilheteAtual.toJson()}');
-    if (itensVendaBilheteAtual != null) {
-      final v = itensVendaBilheteAtual!;
+    final v = itensVendaBilheteAtual!;
 
-      nroController.text = v.id?.toString() ?? '';
-      bilheteController.text = v.bilhete?.toString() ?? '';
-      trechoController.text = v.trecho?.toString() ?? '';
-      nrovooController.text = v.voo?.toString() ?? '';
-      paxController.text = v.pax?.toString() ?? '';
-      observacaoController.text = v.observacao?.toString() ?? '';
-      valorController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
-      .format(v.valorbilhete ?? 0.0);
-      taxaController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
-      .format(v.valortaxabilhete ?? 0.0);
-      servicoController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
-      .format(v.valortaxaservico ?? 0.0);
-      assentoController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
-      .format(v.valorassento ?? 0.0);
-      
-      selectedOperadora = v.idoperadora?.toString();
-      selectedCia = v.idciaaerea?.toString();
-      selectedVoo = v.voo?.toString();
-      selectedTipoVoo = v.tipovoo?.toString();
-      selectedTipoBilhete = v.tipobilhete?.toString();
+  setState(() {
+    nroController.text = v.id?.toString() ?? '';
+    bilheteController.text = v.bilhete?.toString() ?? '';
+    trechoController.text = v.trecho?.toString() ?? '';
+    nrovooController.text = v.voo?.toString() ?? '';
+    paxController.text = v.pax?.toString() ?? '';
+    observacaoController.text = v.observacao?.toString() ?? '';
+    valorController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
+    .format(v.valorbilhete ?? 0.0);
+    taxaController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
+    .format(v.valortaxabilhete ?? 0.0);
+    servicoController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
+    .format(v.valortaxaservico ?? 0.0);
+    assentoController.text = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 2)
+    .format(v.valorassento ?? 0.0);
+    
+    selectedOperadora = v.idoperadora?.toString();
+    selectedCia = v.idciaaerea?.toString();
+    selectedVoo = v.voo?.toString();
+    selectedTipoVoo = v.tipovoo?.toString();
+    selectedTipoBilhete = v.tipobilhete?.toString();
 
-      setState(() {}); // Garante que os dados sejam renderizados
+    bloquearRequisicao = bloquear;
+
+    }); // Garante que os dados sejam renderizados
     }
-  }
 
 
   Future<void> loadDropdownData() async {
@@ -203,27 +196,38 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
   }
 
 
-  double parseValor(String valor) {
-    return double.tryParse(valor.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0;
+  Future<bool> bloquearVenda() async {
+    var bloquear = false;
+
+    if ((widget.idReciboReceber != 0)&&(widget.idReciboReceber != null)) {
+      bloquear = true;
+    }
+
+    if ((widget.idFatura != 0)&&(widget.idFatura != null)) {
+      bloquear = true;
+    }
+
+    try {
+      final temBaixa = await VendaBilheteService.getTemBaixa(widget.idVenda.toString());
+      if (temBaixa > 0) {
+        bloquear = true;
+      }
+    } catch (e) {
+      print('Erro ao verificar baixa: $e');
+    }
+
+    return bloquear;
   }
 
 
-  void _reabrirFormularioAddBilhete({Map<String, dynamic>? itemvendabilhete}) async {
-    final resultado = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        contentPadding: EdgeInsets.zero,
-        content: SizedBox(
-          width: 1000,//1200
-          height: 500,
-          child: ItemVendaBilheteForm(
-            idVenda: int.tryParse(nroVendaController.text) ?? 0,
-            itemvendabilhete: itemvendabilhete != null ? ItensVendaBilhete.fromJson(itemvendabilhete) : null,
-          ),
-        ),
-      ),
-    );
+  double parseValor(String valor) {
+    return double.tryParse(
+      valor
+          .replaceAll('R\$', '') // Remove "R$"
+          .replaceAll(' ', '')    // Remove espaços
+          .replaceAll('.', '')    // Remove pontos dos milhares
+          .replaceAll(',', '.')   // Troca vírgula por ponto decimal
+    ) ?? 0.0;
   }
 
 
@@ -244,7 +248,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
   }
 
   
-  void atualizarItensVendaBilhete(ItensVendaBilhete novo) {
+  void atualizarItensVendaBilheteAtual(ItensVendaBilhete novo) {
     setState(() {
       itensVendaBilheteAtual = novo;
     });
@@ -282,12 +286,8 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
       voo: '',
     );
 
-    atualizarItensVendaBilhete(itensVendaBilheteAux);
+    atualizarItensVendaBilheteAtual(itensVendaBilheteAux);
 
-    //setState(() {
-    //  Navigator.popUntil(context, (route) => route.isFirst);
-    //  _reabrirFormularioAddBilhete();
-    //});
   }
 
 
@@ -306,9 +306,10 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
             }
 
             if (_formKey.currentState!.validate()) {
+              //print('ENTROU ONVALIDAE');
               final itemvendabilhete = ItensVendaBilhete(
               idvenda: int.tryParse(nroVendaController.text) ?? 0,
-              id: itensVendaBilheteAtual?.id ?? 0,
+              id: itensVendaBilheteAtual.id ?? 0,
               valorbilhete: parseValor(valorController.text),
               valortaxabilhete: parseValor(taxaController.text),
               valorassento: parseValor(assentoController.text),
@@ -333,17 +334,19 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
               voo: nrovooController.text,
               );
 
+             // print(valorController.text +' - '+ taxaController.text);
+             // print(parseValor(valorController.text).toString() +' - '+ parseValor(taxaController.text).toString());
+
               bool sucesso = false;
-              if ((itensVendaBilheteAtual?.id == null)|| (itensVendaBilheteAtual?.id == 0)) {
+              if ((itensVendaBilheteAtual.id == null)|| (itensVendaBilheteAtual.id == 0)) {
+               // print('ENTROU INSERIR');
+               // print('Venda: ${(itemvendabilhete.toJson())}');                 
 
                 final idGerado = await ItemVendaBilheteService.createItemVendaBilhete(itemvendabilhete);
 
                 if (idGerado != null) {
                     nroController.text = idGerado.toString();
-                    //final item = await ItemVendaBilheteService.getItensVendaBilheteById(idGerado.toString());
-                    //_reabrirFormularioAddBilhete(itemvendabilhete: item.toJson());
-                    //print('Venda: ${jsonEncode(venda.toJson())}');
-                    var itensVendaBilheteAtual = ItensVendaBilhete(
+                    var itensVendaBilheteAux = ItensVendaBilhete(
                     idvenda: int.tryParse(nroVendaController.text) ?? 0,
                     id: idGerado,
                     valorbilhete: parseValor(valorController.text),
@@ -370,7 +373,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
                     voo: nrovooController.text,
                     );
                     
-                    atualizarItensVendaBilhete(itensVendaBilheteAtual);                    
+                    atualizarItensVendaBilheteAtual(itensVendaBilheteAux);                    
                     
                     final confirmar = await showDialog<bool>(
                       context: context,
@@ -392,10 +395,12 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
                     });
                 }  
 
-                //sucesso = await ItemVendaBilheteService.createItemVendaBilhete(itemvendabilhete);
               } else {
-                //print('ENTROU UPDATE');
+               // print('ENTROU ATUALIZAR');
+               // print('Venda: ${(itemvendabilhete.toJson())}');
+
                 sucesso = await ItemVendaBilheteService.updateItemVendaBilhete(itemvendabilhete);
+                atualizarItensVendaBilheteAtual(itemvendabilhete); 
 
                 final confirmar = await showDialog<bool>(
                   context: context,
@@ -432,7 +437,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
 
   void onExcluir(int? id) async{
 
-    if ((itensVendaBilheteAtual?.id != 0)&&(itensVendaBilheteAtual?.id != null)){
+    if ((itensVendaBilheteAtual.id != 0)&&(itensVendaBilheteAtual.id != null)){
 
       final confirmar = await showDialog<bool>(
         context: context,
@@ -483,16 +488,6 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
     }
   }
 
-
-  void onTitulo() {
-    // TODO: lógica do botão Títulos
-  }
-
-
-  void onBilhete() {
-    // TODO: lógica do botão Bilhete
-    
-  }
 
   /// ---------------------------
   /// Dropdown
@@ -801,8 +796,37 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
       readOnly: readOnly,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly, // Só números
+        CentavosInputFormatter(),
+      ],
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        counterText: '',
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Valor não pode ser nulo.';
+        }
+        return null;
+      },
+    );
+  }
+
+
+/*
+  Widget buildTextFieldValorDecimal(
+    String label,
+    TextEditingController controller, {
+    bool readOnly = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        //FilteringTextInputFormatter.digitsOnly, // Só números
         CentavosInputFormatter(), // Formata para 0,00
+       // MoneyInputFormatter( leadingSymbol: 'R\$ ',),
       ],
       decoration: InputDecoration(
         labelText: label,
@@ -817,7 +841,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
       },
     );
   }
-
+*/
 
   /// ---------------------------
   /// Botões
@@ -828,7 +852,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
       runSpacing: 8,
       children: [
         ElevatedButton(
-          onPressed: habilitaSalvarCancelar ? onTitulo : null,
+          onPressed: habilitaSalvarCancelar ? null : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.purple,
             foregroundColor: Colors.white,
@@ -836,7 +860,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
           child: const Text('Impr.Trechos'),
         ),
         ElevatedButton(
-          onPressed: habilitaSalvarCancelar ? onTitulo : null,
+          onPressed: habilitaSalvarCancelar ? null : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
             foregroundColor: Colors.white,
@@ -844,7 +868,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
           child: const Text('Trechos'),
         ),
         ElevatedButton(
-          onPressed: habilitaSalvarCancelar ? onNovo : null,
+          onPressed: (habilitaSalvarCancelar && (!bloquearRequisicao)) ? onNovo : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
             foregroundColor: Colors.white,
@@ -852,7 +876,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
           child: const Text('Novo'),
         ),
         ElevatedButton(
-          onPressed: habilitaSalvarCancelar ? onSalvar : null,
+          onPressed: (habilitaSalvarCancelar && (!bloquearRequisicao)) ? onSalvar : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.indigo,
             foregroundColor: Colors.white,
@@ -860,7 +884,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
           child: const Text('Salvar'),
         ),
         ElevatedButton(
-          onPressed: habilitaSalvarCancelar ?  () => onExcluir(itensVendaBilheteAtual!.id!) : null,
+          onPressed: (habilitaSalvarCancelar && (!bloquearRequisicao)) ?  () => onExcluir(itensVendaBilheteAtual.id!) : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
@@ -1008,6 +1032,5 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
       },
     );
   }
-
 
 }

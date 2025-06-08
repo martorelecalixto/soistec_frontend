@@ -36,7 +36,6 @@ class EntidadeService {
     }
   }
 
-
   static Future<List<Entidade>> getEmissoresDropDown() async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
@@ -90,6 +89,32 @@ class EntidadeService {
   }
 
   static Future<List<Entidade>> getClientesDropDown() async {
+    final prefs = await SharedPreferences.getInstance();
+    final empresa = prefs.getString('empresa');
+
+    if (empresa == null || empresa.isEmpty) {
+      throw Exception('Empresa não definida nas preferências.');
+    }
+
+    final queryParams = {
+      'empresa': empresa,
+    };
+
+    final uri = Uri.parse(Url).replace(queryParameters: queryParams);
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final List jsonData = json.decode(response.body);
+
+      //print('Dados filial_service: $jsonData');
+
+      return jsonData.map((e) => Entidade.fromJson(e)).toList();
+    } else {
+      throw Exception('Erro ao carregar clientes');
+    }
+  }
+
+  static Future<List<Entidade>> getFornecedoresDropDown() async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
 

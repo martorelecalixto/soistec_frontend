@@ -19,6 +19,7 @@
      // lib/service/meuService.js
     static const String Url = '${AppConfig.baseUrl}/api/vendasbilhete';
     static const String Url2 = '${AppConfig.baseUrl}/api/vendasbilhete/incVendaBilhete';
+    static const String UrlTemBaixa = '${AppConfig.baseUrl}/api/vendasbilhete/tembaixa';
 
     static Future<List<VendaBilhete>> getVendaBilhetes({String? idfilial, String? idcliente, String? idmoeda, DateTime? datainicial, DateTime? datafinal}) async {
       final prefs = await SharedPreferences.getInstance();
@@ -44,6 +45,7 @@
 
       final uri = Uri.parse(Url).replace(queryParameters: queryParams);
       final response = await http.get(uri);
+      // print('Dados decodificados: ${response.body}');
 
       if (response.statusCode == 200) {
         final List jsonData = json.decode(response.body);
@@ -72,15 +74,12 @@
     }
 
     static Future<bool> updateVendaBilhete(VendaBilhete venda) async {
-      //print('ENTROU UPDATE');
-      //print(Uri.parse('$Url/${venda.idvenda}'));
+     
       final response = await http.put(
         Uri.parse('$Url/${venda.idvenda}'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(venda.toJson()),
       );
-     // print(venda.idcentrocusto.toString());
-      //print('VOLTO DA API');
       return response.statusCode == 200;
     }
 
@@ -162,6 +161,33 @@
         return VendaBilhete.fromJson(jsonData);
       } else if (response.statusCode == 404) {
         throw Exception('Venda não encontrada');
+      } else {
+        throw Exception('Erro ao buscar venda: ${response.reasonPhrase}');
+      }
+    }
+
+    static Future<int> getTemBaixa(String idvenda) async {
+      final prefs = await SharedPreferences.getInstance();
+      final empresa = prefs.getString('empresa');
+
+      if (empresa == null || empresa.isEmpty) {
+        throw Exception('Empresa não definida nas preferências.');
+      }
+
+      final uri = Uri.parse('$UrlTemBaixa/$idvenda');
+      //print(uri);
+
+      final response = await http.get(uri);
+      //print(response.body);
+      //print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final qtd = jsonData['qtd'] ?? 0;
+       // print('QTD :' + qtd.toString());
+        return qtd;
+      } else if (response.statusCode == 404) {
+        return 0; // ou lança exceção se quiser
       } else {
         throw Exception('Erro ao buscar venda: ${response.reasonPhrase}');
       }

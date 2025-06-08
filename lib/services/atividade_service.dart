@@ -64,7 +64,7 @@ class AtividadeService {
 
   static Future<bool> createAtividade(Atividade atividade) async {
     final resultado = json.encode(atividade.toJson());
-    print('Dados decodificados: $resultado');
+    //print('Dados decodificados: $resultado');
     final response = await http.post(
       Uri.parse(Url),
       headers: {'Content-Type': 'application/json'},

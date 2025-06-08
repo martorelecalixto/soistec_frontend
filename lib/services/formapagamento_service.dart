@@ -62,7 +62,6 @@ class FormaPagamentoService {
     }
   }
 
-
   static Future<bool> createFormaPagamento(FormaPagamento formapagamento) async {
     final resultado = json.encode(formapagamento.toJson());
     print('Dados decodificados: $resultado');
@@ -87,4 +86,29 @@ class FormaPagamentoService {
     final response = await http.delete(Uri.parse('$Url/$idformapagamento'));
     return response.statusCode == 200 || response.statusCode == 204;
   }
+
+  static Future<FormaPagamento> getFormaPagamentoById(String idformapagamento) async {
+    final prefs = await SharedPreferences.getInstance();
+    final empresa = prefs.getString('empresa');
+
+    if (empresa == null || empresa.isEmpty) {
+      throw Exception('Empresa não definida nas preferências.');
+    }
+
+    final uri = Uri.parse('$Url/$idformapagamento'); // <--- URL com o ID na rota
+   // print(uri);
+
+    final response = await http.get(uri);
+    //print(response.body);
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      return FormaPagamento.fromJson(jsonData);
+    } else if (response.statusCode == 404) {
+      throw Exception('Venda não encontrada');
+    } else {
+      throw Exception('Erro ao buscar venda: ${response.reasonPhrase}');
+    }
+  }
+
 }

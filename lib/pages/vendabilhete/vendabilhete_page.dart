@@ -101,6 +101,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
 
   Future<void> _carregarVendaBilhete({bool aplicarFiltros = false}) async {
     setState(() => isLoading = true);
+   
 
     try {
       // Verifica se todos os filtros estão vazios/nulos
@@ -124,31 +125,36 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
       );
 
       final listaMapeada = resultado.map((f) => {
-        'id': f.id,
-        'datavenda': f.datavenda,
-        'idvenda': f.idvenda,
-        'entidade': f.entidade,
-        'pagamento': f.pagamento,
-        'valortotal': f.valortotal,
-        'descontototal': f.descontototal,
-        'valorentrada': f.valorentrada,
-        'observacao': f.observacao,
-        'solicitante': f.solicitante,
+        'id': f.id ?? 0,
+        'datavenda': f.datavenda?.toIso8601String() ?? '',
+        'idvenda': f.idvenda ?? 0,
+        'entidade': f.entidade ?? '',
+        'pagamento': f.pagamento ?? '',
+        'valortotal': f.valortotal ?? 0.0,
+        'descontototal': f.descontototal ?? 0.0,
+        'valorentrada': f.valorentrada ?? 0.0,
+        'observacao': f.observacao ?? '',
+        'solicitante': f.solicitante ?? '',
         'identidade': f.identidade,
-        'empresa': f.empresa,
-        'datavencimento': f.datavencimento,
+        'empresa': f.empresa ?? '',
+        'datavencimento': f.datavencimento?.toIso8601String() ?? '',
         'idmoeda': f.idmoeda,
         'idvendedor': f.idvendedor,
         'idemissor': f.idemissor,
         'idformapagamento': f.idformapagamento,
-        'idcentrocusto': f.idcentrocusto, 
-        'idfatura': f.idfatura,
-        'idreciboreceber': f.idreciboreceber,
+        'idcentrocusto': f.idcentrocusto,
+        'idfatura': f.idfatura ?? 0,
+        'idreciboreceber': f.idreciboreceber ?? 0,
         'idgrupo': f.idgrupo,
         'idfilial': f.idfilial,
-        'vendedor': f.vendedor,
-        'emissor': f.emissor,
+        'vendedor': f.vendedor ?? '',
+        'emissor': f.emissor ?? '',
+        'recibo': f.recibo ?? 0,
+        'fatura': f.fatura ?? 0,
+        'valorpago': f.valorpago ?? 0,
       }).toList();
+
+      //print(listaMapeada.toList());
 
       setState(() {
         vendabilhete = listaMapeada;
@@ -158,6 +164,28 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
     } catch (e) {
       setState(() => isLoading = false);
     }
+  }
+
+
+  Future<bool> bloquearVenda(int idvenda) async {
+    var bloquear = false;
+/*
+    if ((vendabilheteFiltradas?.id != 0)&&(vendabilheteFiltradas?.idreciboreceber != null))
+      bloquear = true;
+
+    if ((vendabilheteFiltradas?.idfatura != 0)&&(vendabilheteFiltradas?.idfatura != null))
+      bloquear = true;
+*/
+    try {
+      final temBaixa = await VendaBilheteService.getTemBaixa(idvenda.toString());
+      if (temBaixa > 0) {
+        bloquear = true;
+      }
+    } catch (e) {
+      print('Erro ao verificar baixa: $e');
+    }
+
+    return bloquear;
   }
 
 
@@ -521,6 +549,7 @@ class _VendaBilhetePageState extends State<VendaBilhetePage> {
                                 icon: const Icon(Icons.edit, color: Colors.orange),
                                 onPressed: () => _abrirFormularioRequisicaoBilhete(vendabilhete: vendabilhete),
                               ),
+                              if((vendabilhete['valorpago'] == 0) &&((vendabilhete['idfatura'] == 0)||(vendabilhete['idfatura'] == null))&&((vendabilhete['idreciboreceber'] == 0)|| (vendabilhete['idreciboreceber'] == null)))
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () => _confirmarExclusao(vendabilhete['id']),

@@ -30,7 +30,10 @@ class VendaBilhete {
   final String? pagamento;
   final String? vendedor;
   final String? emissor;
-
+  final int? recibo;
+  final int? fatura;
+  final double? valorpago;
+  
   VendaBilhete({
     this.idvenda,
     this.datavenda,
@@ -63,6 +66,9 @@ class VendaBilhete {
     this.pagamento,
     this.vendedor,
     this.emissor,
+    this.recibo,
+    this.fatura,
+    this.valorpago,
   });
 
   factory VendaBilhete.fromJson(Map<String, dynamic> json) {
@@ -98,6 +104,9 @@ class VendaBilhete {
       pagamento: json['pagamento'] as String?,
       vendedor: json['vendedor'] as String?,
       emissor: json['emissor'] as String?,
+      recibo: json['recibo'] as int?,
+      fatura: json['fatura'] as int?,
+      valorpago: json['valorpago'] as double?,
     );
   }
 
@@ -134,6 +143,9 @@ class VendaBilhete {
       'pagamento': pagamento,
       'vendedor': vendedor,
       'emissor': emissor,
+      'recibo': recibo,
+      'fatura': fatura,
+      'valorpago': valorpago,
     };
   }
 }

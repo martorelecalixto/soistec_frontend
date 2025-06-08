@@ -23,6 +23,7 @@ dependencies:
   pdf: ^3.10.7  # ou a versão mais recente disponível
   uuid: ^4.0.0
   #pdf_google_fonts: ^2.0.0
+  flutter_multi_formatter: ^2.11.0
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +36,7 @@ flutter:
   # Se desejar adicionar assets, descomente e edite as linhas abaixo:
   assets:
      - assets/logo.png
+     - assets/02731674000191.png
      - assets/fonts/Roboto-Regular.ttf
      - assets/fonts/Roboto-Bold.ttf
      - assets/fonts/OpenSans-Regular.ttf

@@ -8,6 +8,11 @@ import 'pages/home_page.dart';
 import 'pages/atividade/atividade_page.dart';
 import 'pages/filial/filial_page.dart';
 import 'pages/vendabilhete/vendabilhete_page.dart';
+import 'pages/vendahotel/vendahotel_page.dart';
+import 'pages/acomodacao/acomodacao_page.dart';
+import 'pages/tiposervico/tiposervico_page.dart';
+import 'pages/reciboreceber/reciboreceber_page.dart';
+import 'pages/tituloreceber/tituloreceber_page.dart';
 
 void main() {
   runApp(const SistradeApp());
@@ -68,6 +73,11 @@ class SistradeApp extends StatelessWidget {
             '/atividade': (context) => const AtividadePage(),
             '/filial': (context) => const FilialPage(),
             '/vendabilhete': (context) => const VendaBilhetePage(),
+            '/vendahotel': (context) => const VendaHotelPage(),
+            '/acomodacao': (context) => const AcomodacaoPage(),
+            '/tiposervico': (context) => const TipoServicoPage(),
+            '/reciboreceber': (context) => const ReciboReceberPage(),
+            '/tituloreceber': (context) => const TituloReceberPage(),
           },
         );
       },

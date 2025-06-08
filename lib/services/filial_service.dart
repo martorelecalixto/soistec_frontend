@@ -22,6 +22,8 @@ class FilialService {
     };
 
     final uri = Uri.parse(Url).replace(queryParameters: queryParams);
+   // print('URL EM getFiliaisDropDown -> ' + Url.toString());
+   // print('URI EM getFiliaisDropDown -> ' + uri.toString());
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {

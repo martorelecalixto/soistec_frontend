@@ -1,7 +1,6 @@
 
   import 'dart:convert';
   import 'package:http/http.dart' as http;
-import 'package:printing/printing.dart';
   import '../models/itensvendabilhete_model.dart';
   import 'package:shared_preferences/shared_preferences.dart';
   import '../config.dart'; // importa o arquivo de configuração
