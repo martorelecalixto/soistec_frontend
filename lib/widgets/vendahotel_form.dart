@@ -171,7 +171,7 @@ class _VendaHotelFormState extends State<VendaHotelForm> {
   
     //print('ENTROU _carregarDadosIniciais ');
 
-    final v = vendaHotelAtual!;
+    final v = vendaHotelAtual;
 
     nroController.text = v.id?.toString() ?? '';
     solicitanteController.text = v.solicitante ?? '';
@@ -1051,7 +1051,7 @@ class _VendaHotelFormState extends State<VendaHotelForm> {
                         child: pw.Text('REQUISIÇÃO', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
                       ),
                     ),
-                    pw.Text('Nº ${vendaHotelAtual!.id.toString().padLeft(5, '0')}'),
+                    pw.Text('Nº ${vendaHotelAtual.id.toString().padLeft(5, '0')}'),
                   ],
                 ),
                 pw.SizedBox(height: 4),
@@ -1164,10 +1164,10 @@ class _VendaHotelFormState extends State<VendaHotelForm> {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('Pagamento: ${vendaHotelAtual!.pagamento}'),
-                          pw.Text('Vencimento: ${_formatarData(vendaHotelAtual!.datavencimento.toString())}' ),
-                          pw.Text('Vendedor: ${vendaHotelAtual!.vendedor}'),
-                          pw.Text('Emissor: ${vendaHotelAtual!.emissor}'),
+                          pw.Text('Pagamento: ${vendaHotelAtual.pagamento}'),
+                          pw.Text('Vencimento: ${_formatarData(vendaHotelAtual.datavencimento.toString())}' ),
+                          pw.Text('Vendedor: ${vendaHotelAtual.vendedor}'),
+                          pw.Text('Emissor: ${vendaHotelAtual.emissor}'),
                           pw.Text(''),
                         ],
                       ),

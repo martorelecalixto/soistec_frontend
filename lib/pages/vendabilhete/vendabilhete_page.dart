@@ -9,17 +9,12 @@ import 'package:sistrade/services/moeda_service.dart';
 import 'package:sistrade/services/entidade_service.dart';
 import 'package:sistrade/widgets/vendabilhete_form.dart';
 //import 'package:syncfusion_flutter_pdf/pdf.dart';
-import 'dart:typed_data';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
 //import 'package:pdf_google_fonts/pdf_google_fonts.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'dart:html' as html;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:convert';
 
 String _formatarData(dynamic data) {
   try {

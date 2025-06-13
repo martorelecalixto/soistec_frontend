@@ -133,7 +133,7 @@ class _ItemVendaBilheteFormState extends State<ItemVendaBilheteForm> {
     nroVendaController.text = widget.idVenda.toString();
 
     // print('Item que chegou: ${itensVendaBilheteAtual.toJson()}');
-    final v = itensVendaBilheteAtual!;
+    final v = itensVendaBilheteAtual;
 
   setState(() {
     nroController.text = v.id?.toString() ?? '';

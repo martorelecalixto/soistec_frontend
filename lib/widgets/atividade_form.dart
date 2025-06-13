@@ -30,7 +30,6 @@ class _AtividadeFormState extends State<AtividadeForm> {
     }
   }
 
-
   void _salvar() async {
     final prefs = await SharedPreferences.getInstance();
     final empresa = prefs.getString('empresa');
@@ -117,94 +116,92 @@ class _AtividadeFormState extends State<AtividadeForm> {
     );
   }
 
-Widget _buildTextField(
-  TextEditingController controller,
-  String label, {
-  bool validator = false,
-  List<TextInputFormatter>? inputFormatters,
-  TextInputType? keyboardType,
-  void Function(String)? onFieldSubmitted,
-}) {
-  return TextFormField(
-    controller: controller,
-    style: TextStyle(fontSize: fontSize),
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(fontSize: fontSize),
-      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-    ),
-    validator: validator ? (value) => value!.isEmpty ? 'Informe o $label' : null : null,
-    inputFormatters: inputFormatters,
-    keyboardType: keyboardType,
-    onFieldSubmitted: onFieldSubmitted,
-  );
-}
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    bool validator = false,
+    List<TextInputFormatter>? inputFormatters,
+    TextInputType? keyboardType,
+    void Function(String)? onFieldSubmitted,
+  }) {
+    return TextFormField(
+      controller: controller,
+      style: TextStyle(fontSize: fontSize),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: fontSize),
+        contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      ),
+      validator: validator ? (value) => value!.isEmpty ? 'Informe o $label' : null : null,
+      inputFormatters: inputFormatters,
+      keyboardType: keyboardType,
+      onFieldSubmitted: onFieldSubmitted,
+    );
+  }
 
-
-
-@override
-Widget build(BuildContext context) {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 8,
-          left: 16,
-          right: 16,
-        ),
-        child: SingleChildScrollView(
-          child: IntrinsicHeight(
-            child: Form(
-              key: _formKey,
-              child: 
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Cadastro de Atividade',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            top: 8,
+            left: 16,
+            right: 16,
+          ),
+          child: SingleChildScrollView(
+            child: IntrinsicHeight(
+              child: Form(
+                key: _formKey,
+                child: 
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Cadastro de Atividade',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildResponsiveForm(constraints.maxWidth),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                backgroundColor: Colors.grey[300],
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          const SizedBox(height: 12),
+                          _buildResponsiveForm(constraints.maxWidth),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Colors.grey[300],
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                ),
+                                child: const Text('Cancelar', style: TextStyle(color: Colors.black)),
                               ),
-                              child: const Text('Cancelar', style: TextStyle(color: Colors.black)),
-                            ),
-                            const SizedBox(width: 10),
-                            ElevatedButton(
-                              onPressed: _salvar,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              const SizedBox(width: 10),
+                              ElevatedButton(
+                                onPressed: _salvar,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                ),
+                                child: const Text('Salvar'),
                               ),
-                              child: const Text('Salvar'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-              
-              
+                            ],
+                          ),
+                        ],
+                      ),
+                
+                
 
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
 
 }

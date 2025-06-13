@@ -13,6 +13,8 @@ import 'pages/acomodacao/acomodacao_page.dart';
 import 'pages/tiposervico/tiposervico_page.dart';
 import 'pages/reciboreceber/reciboreceber_page.dart';
 import 'pages/tituloreceber/tituloreceber_page.dart';
+import 'pages/empresa/empresa_page.dart';
+import 'pages/entidade/entidade_page.dart';
 
 void main() {
   runApp(const SistradeApp());
@@ -34,6 +36,7 @@ class SistradeApp extends StatelessWidget {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const MaterialApp(
+            //home: SplashScreen(),
             home: Scaffold(
               body: Center(child: CircularProgressIndicator()),
             ),
@@ -78,6 +81,8 @@ class SistradeApp extends StatelessWidget {
             '/tiposervico': (context) => const TipoServicoPage(),
             '/reciboreceber': (context) => const ReciboReceberPage(),
             '/tituloreceber': (context) => const TituloReceberPage(),
+            '/empresa': (context) => const EmpresaPage(),
+            '/entidade': (context) => const EntidadePage(),
           },
         );
       },

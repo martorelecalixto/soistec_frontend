@@ -129,7 +129,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
   final descontoTotalController = TextEditingController(text: '0,00');
  
   List<ItensVendaBilhete> _itensVendaBilhete = [];
-  List<Map<String, dynamic>> _tituloreceber = [];
+  final List<Map<String, dynamic>> _tituloreceber = [];
 
 
   bool _isLoading = true;
@@ -267,7 +267,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                 dataemissao: dataVenda,
                 datavencimento: dataVencimento,
                 datacompetencia: dataVencimento,
-                documento: 'Requisição bilhete Nº ' + nroController.text, // ou algum campo se houver
+                documento: 'Requisição bilhete Nº ${nroController.text}', // ou algum campo se houver
                 valor: parseValor(valorTotalController.text),
                 valorpago: 0,
                 descontopago: 0,
@@ -1158,7 +1158,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                         child: pw.Text('REQUISIÇÃO', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
                       ),
                     ),
-                    pw.Text('Nº ${vendaBilheteAtual!.id.toString().padLeft(5, '0')}'),
+                    pw.Text('Nº ${vendaBilheteAtual.id.toString().padLeft(5, '0')}'),
                   ],
                 ),
                 pw.SizedBox(height: 4),
@@ -1271,10 +1271,10 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('Pagamento: ${vendaBilheteAtual!.pagamento}'),
-                          pw.Text('Vencimento: ${_formatarData(vendaBilheteAtual!.datavencimento.toString())}' ),
-                          pw.Text('Vendedor: ${vendaBilheteAtual!.vendedor}'),
-                          pw.Text('Emissor: ${vendaBilheteAtual!.emissor}'),
+                          pw.Text('Pagamento: ${vendaBilheteAtual.pagamento}'),
+                          pw.Text('Vencimento: ${_formatarData(vendaBilheteAtual.datavencimento.toString())}' ),
+                          pw.Text('Vendedor: ${vendaBilheteAtual.vendedor}'),
+                          pw.Text('Emissor: ${vendaBilheteAtual.emissor}'),
                           pw.Text(''),
                         ],
                       ),
@@ -1524,7 +1524,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
     🔸Isso garante que a UI reconstrua corretamente.
     */
 
-    final v = vendaBilheteAtual!;
+    final v = vendaBilheteAtual;
 
     bool bloquear = await bloquearVenda(); 
 
@@ -1605,7 +1605,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
 
     try {
       final temBaixa = await VendaBilheteService.getTemBaixa(vendaBilheteAtual.idvenda.toString());
-      if (temBaixa > 0) {
+      if ((temBaixa > 0)) {
         bloquear = true;
       }
     } catch (e) {
@@ -2351,7 +2351,7 @@ class _VendaBilheteFormState extends State<VendaBilheteForm> {
           child: const Text('Requisição'),
         ),
         ElevatedButton(
-          onPressed: (habilitaSalvarCancelar && (!bloquearRequisicao)) ? onSalvarRecibo : null,
+          onPressed: (habilitaSalvarCancelar) ? onSalvarRecibo : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,

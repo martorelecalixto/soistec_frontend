@@ -142,7 +142,7 @@ class _ItemVendaHotelFormState extends State<ItemVendaHotelForm> {
     await Future.delayed(const Duration(milliseconds: 500));
     nroVendaController.text = widget.idVenda.toString();
     // print('Item que chegou: ${itensVendaHotelAtual.toJson()}');
-    final v = itensVendaHotelAtual!;
+    final v = itensVendaHotelAtual;
 
     descricaoController.text = v.descricao?.toString() ?? '';
     paxController.text = v.pax?.toString() ?? '';
